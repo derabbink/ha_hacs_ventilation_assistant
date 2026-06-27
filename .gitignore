@@ -58,3 +58,67 @@ Backups.backupdb
 MobileBackups.trash
 tmbootpicker.efi
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Home Assistant local runtime/config artifacts
+.storage/
+deps/
+tts/
+www/community/
+home-assistant.log*
+home-assistant_v2.db*
+home-assistant.log.fault
+home-assistant_v2.db-shm
+home-assistant_v2.db-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Home Assistant secrets/backups
+secrets.yaml
+known_devices.yaml
+*.tar
+*.tar.gz
+
+# HACS/local custom integration development
+repositories/
+.hacs/
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test and tool reports
+junit.xml
+test-results/
+reports/
