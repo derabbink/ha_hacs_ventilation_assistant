@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ventilation Assistant",
+        "description": "Create a virtual ventilation device or configure shared defaults.",
+        "data": {
+          "kind": "Action"
+        }
+      },
+      "global": {
+        "title": "Global defaults",
+        "data": {
+          "comfort_temp_min": "Indoor comfort temperature minimum",
+          "comfort_temp_max": "Indoor comfort temperature maximum",
+          "comfort_rh_min": "Indoor comfort humidity minimum",
+          "comfort_rh_max": "Indoor comfort humidity maximum",
+          "priority": "Priority"
+        }
+      },
+      "device": {
+        "title": "Ventilation device",
+        "data": {
+          "name": "Name",
+          "indoor_temp_entities": "Indoor temperature entities",
+          "indoor_humidity_entities": "Indoor humidity entities",
+          "outdoor_temp_entities": "Outdoor temperature entities",
+          "outdoor_humidity_entities": "Outdoor humidity entities",
+          "door_window_entities": "Door/window sensors",
+          "comfort_temp_min": "Indoor comfort temperature minimum override",
+          "comfort_temp_max": "Indoor comfort temperature maximum override",
+          "comfort_rh_min": "Indoor comfort humidity minimum override",
+          "comfort_rh_max": "Indoor comfort humidity maximum override",
+          "priority": "Priority override"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This entry already exists."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "indoor_temp_entities": "Indoor temperature entities",
+          "indoor_humidity_entities": "Indoor humidity entities",
+          "outdoor_temp_entities": "Outdoor temperature entities",
+          "outdoor_humidity_entities": "Outdoor humidity entities",
+          "door_window_entities": "Door/window sensors",
+          "comfort_temp_min": "Indoor comfort temperature minimum",
+          "comfort_temp_max": "Indoor comfort temperature maximum",
+          "comfort_rh_min": "Indoor comfort humidity minimum",
+          "comfort_rh_max": "Indoor comfort humidity maximum",
+          "priority": "Priority"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Indoor temperature"
+      },
+      "indoor_humidity": {
+        "name": "Indoor humidity"
+      },
+      "indoor_absolute_humidity": {
+        "name": "Indoor absolute humidity"
+      },
+      "indoor_projected_absolute_humidity": {
+        "name": "Indoor projected absolute humidity"
+      },
+      "indoor_projected_humidity": {
+        "name": "Indoor projected humidity"
+      },
+      "indoor_projected_humidity_difference": {
+        "name": "Indoor projected humidity difference"
+      },
+      "indoor_outdoor_temperature_difference": {
+        "name": "Indoor outdoor temperature difference"
+      },
+      "outdoor_temperature": {
+        "name": "Outdoor temperature"
+      },
+      "outdoor_humidity": {
+        "name": "Outdoor humidity"
+      },
+      "outdoor_absolute_humidity": {
+        "name": "Outdoor absolute humidity"
+      },
+      "doors_windows_open_percentage": {
+        "name": "Doors/windows open"
+      },
+      "advice": {
+        "name": "Advice",
+        "state": {
+          "KEEP_CLOSED": "Keep closed",
+          "OPEN": "Open",
+          "KEEP_OPEN": "Keep open",
+          "CLOSE": "Close"
+        }
+      }
+    },
+    "binary_sensor": {
+      "any_door_window_open": {
+        "name": "Any door/window open"
+      }
+    }
+  }
+}

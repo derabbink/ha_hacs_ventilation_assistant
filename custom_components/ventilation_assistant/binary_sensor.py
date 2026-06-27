@@ -1,0 +1,58 @@
+"""Binary sensor platform for Ventilation Assistant."""
+
+from __future__ import annotations
+
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from . import VentilationCoordinator
+from .const import DOMAIN
+
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """Set up Ventilation Assistant binary sensors."""
+
+    coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([AnyDoorWindowOpenBinarySensor(coordinator)])
+
+
+class AnyDoorWindowOpenBinarySensor(BinarySensorEntity):
+    """Whether any configured door or window contact is open."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "any_door_window_open"
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+
+    def __init__(self, coordinator: VentilationCoordinator) -> None:
+        """Initialize the binary sensor."""
+
+        self.coordinator = coordinator
+        self._attr_unique_id = f"{coordinator.device_id}_any_door_window_open"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.device_id)},
+            "name": coordinator.device_name,
+            "manufacturer": "Ventilation Assistant",
+        }
+
+    async def async_added_to_hass(self) -> None:
+        """Subscribe to coordinator updates."""
+
+        self.async_on_remove(
+            self.coordinator.async_add_listener(self._async_coordinator_updated)
+        )
+
+    @callback
+    def _async_coordinator_updated(self) -> None:
+        """Write the latest state."""
+
+        self.async_write_ha_state()
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return whether any configured contact is open."""
+
+        return self.coordinator.snapshot().any_open
