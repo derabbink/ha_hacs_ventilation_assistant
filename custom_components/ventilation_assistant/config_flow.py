@@ -234,23 +234,23 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             vol.Optional(
                 CONF_INDOOR_TEMP_ENTITIES,
                 default=defaults.get(CONF_INDOOR_TEMP_ENTITIES, []),
-            ): _entity_selector("sensor"),
+            ): _entity_selector("sensor", "temperature"),
             vol.Optional(
                 CONF_INDOOR_HUMIDITY_ENTITIES,
                 default=defaults.get(CONF_INDOOR_HUMIDITY_ENTITIES, []),
-            ): _entity_selector("sensor"),
+            ): _entity_selector("sensor", "humidity"),
             vol.Optional(
                 CONF_OUTDOOR_TEMP_ENTITIES,
                 default=defaults.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-            ): _entity_selector("sensor"),
+            ): _entity_selector("sensor", "temperature"),
             vol.Optional(
                 CONF_OUTDOOR_HUMIDITY_ENTITIES,
                 default=defaults.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []),
-            ): _entity_selector("sensor"),
+            ): _entity_selector("sensor", "humidity"),
             vol.Optional(
                 CONF_DOOR_WINDOW_ENTITIES,
                 default=defaults.get(CONF_DOOR_WINDOW_ENTITIES, []),
-            ): _entity_selector("binary_sensor"),
+            ): _entity_selector("binary_sensor", ["door", "opening", "window"]),
             vol.Optional(
                 CONF_COMFORT_TEMP_MIN, default=defaults.get(CONF_COMFORT_TEMP_MIN)
             ): vol.Any(None, float),
@@ -284,9 +284,15 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
     return vol.Schema(schema)
 
 
-def _entity_selector(domain: str) -> selector.EntitySelector:
+def _entity_selector(
+    domain: str, device_class: str | list[str]
+) -> selector.EntitySelector:
     return selector.EntitySelector(
-        selector.EntitySelectorConfig(domain=domain, multiple=True)
+        selector.EntitySelectorConfig(
+            domain=domain,
+            device_class=device_class,
+            multiple=True,
+        )
     )
 
 
