@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Ventilation Assistant",
-        "description": "Configure global defaults or create a ventilation device.",
+        "description": "Configure global defaults or create a ventilation area.",
         "data": {
           "kind": "Action"
         }
@@ -19,13 +19,13 @@
         }
       },
       "device": {
-        "title": "Ventilation device",
+        "title": "Ventilation area",
         "data": {
           "name": "Name",
-          "indoor_temp_entities": "Indoor temperature entities",
-          "indoor_humidity_entities": "Indoor humidity entities",
-          "outdoor_temp_entities": "Outdoor temperature entities",
-          "outdoor_humidity_entities": "Outdoor humidity entities",
+          "indoor_temp_entities": "Indoor temperature sensors",
+          "indoor_humidity_entities": "Indoor humidity sensors",
+          "outdoor_temp_entities": "Outdoor temperature sensors",
+          "outdoor_humidity_entities": "Outdoor humidity sensors",
           "door_window_entities": "Door/window sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum override",
           "comfort_temp_max": "Indoor comfort temperature maximum override",
@@ -43,10 +43,10 @@
     "step": {
       "init": {
         "data": {
-          "indoor_temp_entities": "Indoor temperature entities",
-          "indoor_humidity_entities": "Indoor humidity entities",
-          "outdoor_temp_entities": "Outdoor temperature entities",
-          "outdoor_humidity_entities": "Outdoor humidity entities",
+          "indoor_temp_entities": "Indoor temperature sensors",
+          "indoor_humidity_entities": "Indoor humidity sensors",
+          "outdoor_temp_entities": "Outdoor temperature sensors",
+          "outdoor_humidity_entities": "Outdoor humidity sensors",
           "door_window_entities": "Door/window sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum",
           "comfort_temp_max": "Indoor comfort temperature maximum",
@@ -66,19 +66,19 @@
         "name": "Indoor humidity"
       },
       "indoor_absolute_humidity": {
-        "name": "Indoor absolute humidity"
+        "name": "Absolute indoor humidity"
       },
       "indoor_projected_absolute_humidity": {
-        "name": "Indoor projected absolute humidity"
+        "name": "Projected absolute indoor humidity"
       },
       "indoor_projected_humidity": {
-        "name": "Indoor projected humidity"
+        "name": "Projected indoor humidity"
       },
       "indoor_projected_humidity_difference": {
-        "name": "Indoor projected humidity difference"
+        "name": "Pprojected indoor humidity difference"
       },
       "indoor_outdoor_temperature_difference": {
-        "name": "Indoor outdoor temperature difference"
+        "name": "Projected indoor temperature difference"
       },
       "outdoor_temperature": {
         "name": "Outdoor temperature"
@@ -87,7 +87,7 @@
         "name": "Outdoor humidity"
       },
       "outdoor_absolute_humidity": {
-        "name": "Outdoor absolute humidity"
+        "name": "Absolute outdoor humidity"
       },
       "doors_windows_open_percentage": {
         "name": "Doors/windows open"
@@ -104,7 +104,7 @@
     },
     "binary_sensor": {
       "any_door_window_open": {
-        "name": "Any door/window open"
+        "name": "Any doors/windows open"
       }
     }
   }

@@ -21,11 +21,11 @@ Each ventilation device creates a Home Assistant device containing:
 - Indoor projected absolute humidity
 - Indoor projected relative humidity
 - Indoor projected relative-humidity difference
-- Indoor/outdoor temperature difference
+- Indoor projected temperature difference
 - Outdoor temperature average
 - Outdoor relative humidity average
 - Outdoor absolute humidity
-- Any door/window open
+- Any doors/windows open
 - Door/window open percentage
 - Advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
 

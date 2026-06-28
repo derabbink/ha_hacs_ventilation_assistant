@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ventilation Assistant",
+        "description": "Globale Standardwerte konfigurieren oder ein Lüftungsbereich erstellen.",
+        "data": {
+          "kind": "Aktion"
+        }
+      },
+      "global": {
+        "title": "Globale Standardwerte",
+        "data": {
+          "comfort_temp_min": "Minimale Komfort-Innentemperatur",
+          "comfort_temp_max": "Maximale Komfort-Innentemperatur",
+          "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
+          "comfort_rh_max": "Maximale Komfort-Luftfeuchtigkeit innen",
+          "priority": "Priorität"
+        }
+      },
+      "device": {
+        "title": "Lüftungsgerät",
+        "data": {
+          "name": "Name",
+          "indoor_temp_entities": "Innentemperatur-Sensoren",
+          "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+          "outdoor_temp_entities": "Außentemperatur-Sensoren",
+          "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+          "door_window_entities": "Tür-/Fenstersensoren",
+          "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
+          "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
+          "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
+          "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+          "priority": "Priorität überschreiben"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Dieser Eintrag ist bereits vorhanden."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "indoor_temp_entities": "Innentemperatur-Sensoren",
+          "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+          "outdoor_temp_entities": "Außentemperatur-Sensoren",
+          "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+          "door_window_entities": "Tür-/Fenstersensoren",
+          "comfort_temp_min": "Minimale Komfort-Innentemperatur",
+          "comfort_temp_max": "Maximale Komfort-Innentemperatur",
+          "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
+          "comfort_rh_max": "Maximale Komfort-Luftfeuchtigkeit innen",
+          "priority": "Priorität"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Innentemperatur"
+      },
+      "indoor_humidity": {
+        "name": "Innenluftfeuchtigkeit"
+      },
+      "indoor_absolute_humidity": {
+        "name": "Absolute Luftfeuchtigkeit innen"
+      },
+      "indoor_projected_absolute_humidity": {
+        "name": "Prognostizierte absolute Luftfeuchtigkeit innen"
+      },
+      "indoor_projected_humidity": {
+        "name": "Prognostizierte Luftfeuchtigkeit innen"
+      },
+      "indoor_projected_humidity_difference": {
+        "name": "Prognostizierte Luftfeuchtigkeitsdifferenz innen"
+      },
+      "indoor_outdoor_temperature_difference": {
+        "name": "Prognostizierte Temperaturdifferenz innen"
+      },
+      "outdoor_temperature": {
+        "name": "Außentemperatur"
+      },
+      "outdoor_humidity": {
+        "name": "Außenluftfeuchtigkeit"
+      },
+      "outdoor_absolute_humidity": {
+        "name": "Absolute Luftfeuchtigkeit außen"
+      },
+      "doors_windows_open_percentage": {
+        "name": "Türen/Fenster offen"
+      },
+      "advice": {
+        "name": "Empfehlung",
+        "state": {
+          "KEEP_CLOSED": "Geschlossen halten",
+          "OPEN": "Öffnen",
+          "KEEP_OPEN": "Geöffnet lassen",
+          "CLOSE": "Schließen"
+        }
+      }
+    },
+    "binary_sensor": {
+      "any_door_window_open": {
+        "name": "Türen/Fenster offen"
+      }
+    }
+  }
+}
