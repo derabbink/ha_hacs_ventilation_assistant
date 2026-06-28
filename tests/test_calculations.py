@@ -27,6 +27,7 @@ from custom_components.ventilation_assistant.calculations import (  # noqa: E402
     absolute_humidity,
     relative_humidity,
     ventilation_advice,
+    ventilation_advices,
 )
 from custom_components.ventilation_assistant.const import Advice, Priority  # noqa: E402
 
@@ -49,6 +50,34 @@ class CalculationTests(unittest.TestCase):
         )
 
         self.assertEqual(advice, Advice.OPEN)
+
+    def test_returns_temperature_humidity_and_overall_advice(self) -> None:
+        advices = ventilation_advices(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=70,
+            projected_rh=75,
+        )
+
+        self.assertEqual(advices.temperature, Advice.OPEN)
+        self.assertEqual(advices.humidity, Advice.CLOSE)
+        self.assertEqual(advices.overall, Advice.OPEN)
+
+    def test_split_advices_include_contact_state_when_available(self) -> None:
+        advices = ventilation_advices(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY),
+            any_open=False,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=70,
+            projected_rh=75,
+        )
+
+        self.assertEqual(advices.temperature, Advice.OPEN)
+        self.assertEqual(advices.humidity, Advice.KEEP_CLOSED)
+        self.assertEqual(advices.overall, Advice.KEEP_CLOSED)
 
     def test_advises_open_without_contact_state_when_cooling_helps(self) -> None:
         advice = ventilation_advice(

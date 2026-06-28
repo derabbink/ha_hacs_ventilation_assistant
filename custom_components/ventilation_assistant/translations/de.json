@@ -92,6 +92,24 @@
       "doors_windows_open_percentage": {
         "name": "Türen/Fenster offen"
       },
+      "temperature_advice": {
+        "name": "Temperaturempfehlung",
+        "state": {
+          "KEEP_CLOSED": "Geschlossen halten",
+          "OPEN": "Öffnen",
+          "KEEP_OPEN": "Geöffnet lassen",
+          "CLOSE": "Schließen"
+        }
+      },
+      "humidity_advice": {
+        "name": "Luftfeuchtigkeitsempfehlung",
+        "state": {
+          "KEEP_CLOSED": "Geschlossen halten",
+          "OPEN": "Öffnen",
+          "KEEP_OPEN": "Geöffnet lassen",
+          "CLOSE": "Schließen"
+        }
+      },
       "advice": {
         "name": "Empfehlung",
         "state": {

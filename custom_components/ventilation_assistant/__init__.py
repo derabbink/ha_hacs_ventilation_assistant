@@ -25,7 +25,7 @@ from .calculations import (
     difference,
     open_ratio,
     relative_humidity,
-    ventilation_advice,
+    ventilation_advices,
 )
 from .const import (
     CONF_COMFORT_RH_MAX,
@@ -144,6 +144,8 @@ class VentilationSnapshot:
     outdoor_absolute_humidity: float | None
     any_open: bool | None
     open_percentage: float | None
+    temperature_advice: str | None
+    humidity_advice: str | None
     advice: str | None
 
 
@@ -240,7 +242,7 @@ class VentilationCoordinator:
         any_open, open_count, total_count = self._open_counts()
 
         settings = self.comfort_settings
-        advice = ventilation_advice(
+        advices = ventilation_advices(
             settings=settings,
             any_open=any_open,
             indoor_temp=indoor_temp,
@@ -262,7 +264,11 @@ class VentilationCoordinator:
             outdoor_absolute_humidity=outdoor_ah,
             any_open=any_open,
             open_percentage=open_ratio(open_count, total_count),
-            advice=advice.value if advice is not None else None,
+            temperature_advice=(
+                advices.temperature.value if advices.temperature is not None else None
+            ),
+            humidity_advice=advices.humidity.value if advices.humidity is not None else None,
+            advice=advices.overall.value if advices.overall is not None else None,
         )
 
     @property

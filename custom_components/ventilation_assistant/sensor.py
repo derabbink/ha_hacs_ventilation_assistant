@@ -114,6 +114,20 @@ SENSOR_DESCRIPTIONS = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
+        key="temperature_advice",
+        translation_key="temperature_advice",
+        value_key="temperature_advice",
+        device_class=SensorDeviceClass.ENUM,
+        options=[advice.value for advice in Advice],
+    ),
+    VentilationSensorEntityDescription(
+        key="humidity_advice",
+        translation_key="humidity_advice",
+        value_key="humidity_advice",
+        device_class=SensorDeviceClass.ENUM,
+        options=[advice.value for advice in Advice],
+    ),
+    VentilationSensorEntityDescription(
         key="advice",
         translation_key="advice",
         value_key="advice",

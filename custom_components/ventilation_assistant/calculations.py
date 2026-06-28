@@ -20,6 +20,15 @@ class ComfortSettings:
     priority: Priority
 
 
+@dataclass(frozen=True)
+class VentilationAdvice:
+    """Advice split by decision input plus the priority-resolved result."""
+
+    temperature: Advice | None
+    humidity: Advice | None
+    overall: Advice | None
+
+
 def average(values: list[float]) -> float | None:
     """Return the arithmetic mean, or None when no usable values exist."""
 
@@ -74,6 +83,27 @@ def ventilation_advice(
 ) -> Advice | None:
     """Return ventilation advice for the current measurements and contact state."""
 
+    return ventilation_advices(
+        settings=settings,
+        any_open=any_open,
+        indoor_temp=indoor_temp,
+        outdoor_temp=outdoor_temp,
+        indoor_rh=indoor_rh,
+        projected_rh=projected_rh,
+    ).overall
+
+
+def ventilation_advices(
+    *,
+    settings: ComfortSettings,
+    any_open: bool | None,
+    indoor_temp: float | None,
+    outdoor_temp: float | None,
+    indoor_rh: float | None,
+    projected_rh: float | None,
+) -> VentilationAdvice:
+    """Return temperature, humidity, and overall ventilation advice."""
+
     temperature_advice = _temperature_advice(
         settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
     )
@@ -85,7 +115,11 @@ def ventilation_advice(
         temperature_advice = _apply_contact_state(temperature_advice, any_open)
         humidity_advice = _apply_contact_state(humidity_advice, any_open)
 
-    return _prioritized_advice(settings, temperature_advice, humidity_advice)
+    return VentilationAdvice(
+        temperature=temperature_advice,
+        humidity=humidity_advice,
+        overall=_prioritized_advice(settings, temperature_advice, humidity_advice),
+    )
 
 
 def _apply_contact_state(advice: Advice | None, any_open: bool) -> Advice | None:

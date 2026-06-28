@@ -27,6 +27,8 @@ Each ventilation device creates a Home Assistant device containing:
 - Outdoor absolute humidity
 - Any doors/windows open
 - Door/window open percentage
+- Temperature advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
+- Humidity advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
 - Advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
 
 ## Availability
