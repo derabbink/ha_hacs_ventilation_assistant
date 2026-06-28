@@ -75,7 +75,7 @@
         "name": "Projected indoor humidity"
       },
       "indoor_projected_humidity_difference": {
-        "name": "Pprojected indoor humidity difference"
+        "name": "Projected indoor humidity difference"
       },
       "indoor_outdoor_temperature_difference": {
         "name": "Projected indoor temperature difference"
