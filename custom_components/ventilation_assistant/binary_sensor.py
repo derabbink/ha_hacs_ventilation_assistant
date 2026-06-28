@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import VentilationCoordinator
+from . import yaml_coordinators
 from .const import DOMAIN
 
 
@@ -18,6 +19,20 @@ async def async_setup_entry(
 
     coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([AnyDoorWindowOpenBinarySensor(coordinator)])
+
+
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: dict,
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: dict | None = None,
+) -> None:
+    """Set up YAML-backed Ventilation Assistant binary sensors."""
+
+    async_add_entities(
+        AnyDoorWindowOpenBinarySensor(coordinator)
+        for coordinator in yaml_coordinators(hass)
+    )
 
 
 class AnyDoorWindowOpenBinarySensor(BinarySensorEntity):

@@ -8,9 +8,14 @@ DOMAIN = "ventilation_assistant"
 
 PLATFORMS = ["sensor", "binary_sensor"]
 
+GLOBAL_CONFIG_FILE = "ventilation_assistant.yaml"
+DATA_GLOBAL_OPTIONS = "global_options"
+DATA_COORDINATORS = "coordinators"
+
 CONF_KIND = "kind"
-CONF_GLOBAL = "global"
 CONF_DEVICE = "device"
+CONF_DEVICES = "devices"
+CONF_ID = "id"
 
 CONF_INDOOR_TEMP_ENTITIES = "indoor_temp_entities"
 CONF_INDOOR_HUMIDITY_ENTITIES = "indoor_humidity_entities"

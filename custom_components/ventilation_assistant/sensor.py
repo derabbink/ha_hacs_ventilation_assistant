@@ -17,6 +17,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import VentilationCoordinator
+from . import yaml_coordinators
 from .const import Advice, DOMAIN
 
 ABSOLUTE_HUMIDITY_UNIT = "g/m³"
@@ -131,6 +132,21 @@ async def async_setup_entry(
     coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         VentilationSensor(coordinator, description)
+        for description in SENSOR_DESCRIPTIONS
+    )
+
+
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: dict[str, Any],
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: dict[str, Any] | None = None,
+) -> None:
+    """Set up YAML-backed Ventilation Assistant sensors."""
+
+    async_add_entities(
+        VentilationSensor(coordinator, description)
+        for coordinator in yaml_coordinators(hass)
         for description in SENSOR_DESCRIPTIONS
     )
 

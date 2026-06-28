@@ -1,0 +1,33 @@
+comfort_temp_min: 19.0
+comfort_temp_max: 24.0
+comfort_rh_min: 40.0
+comfort_rh_max: 60.0
+priority: TEMPERATURE
+
+devices:
+  - id: living_room
+    name: Living room
+    indoor_temp_entities:
+      - sensor.living_room_temperature
+    indoor_humidity_entities:
+      - sensor.living_room_humidity
+    outdoor_temp_entities:
+      - sensor.outdoor_temperature
+    outdoor_humidity_entities:
+      - sensor.outdoor_humidity
+    door_window_entities:
+      - binary_sensor.living_room_window
+
+  - id: bedroom
+    name: Bedroom
+    indoor_temp_entities:
+      - sensor.bedroom_temperature
+    indoor_humidity_entities:
+      - sensor.bedroom_humidity
+    outdoor_temp_entities:
+      - sensor.outdoor_temperature
+    outdoor_humidity_entities:
+      - sensor.outdoor_humidity
+    door_window_entities:
+      - binary_sensor.bedroom_window
+    priority: HUMIDITY
