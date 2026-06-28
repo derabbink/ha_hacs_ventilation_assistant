@@ -3,10 +3,10 @@
   "name": "Ventilation Assistant",
   "codeowners": [],
   "config_flow": true,
-  "documentation": "https://github.com/maarten/ha_hacs_ventilation_assistant",
+  "documentation": "https://github.com/derabbink/ha_hacs_ventilation_assistant",
   "integration_type": "helper",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/maarten/ha_hacs_ventilation_assistant/issues",
+  "issue_tracker": "https://github.com/derabbink/ha_hacs_ventilation_assistant/issues",
   "requirements": [],
   "version": "0.1.0"
 }
