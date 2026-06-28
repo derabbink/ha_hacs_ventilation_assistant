@@ -74,71 +74,73 @@ def ventilation_advice(
 ) -> Advice | None:
     """Return ventilation advice for the current measurements and contact state."""
 
-    if any_open is None:
-        return None
-
-    should_open = _should_open(settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh)
-    if should_open is None:
-        should_open = any_open
-
-    if should_open and any_open:
-        return Advice.KEEP_OPEN
-    if should_open and not any_open:
-        return Advice.OPEN
-    if not should_open and any_open:
-        return Advice.CLOSE
-    return Advice.KEEP_CLOSED
-
-
-def _should_open(
-    settings: ComfortSettings,
-    indoor_temp: float | None,
-    outdoor_temp: float | None,
-    indoor_rh: float | None,
-    projected_rh: float | None,
-) -> bool | None:
-    checks = (
-        (_temperature_should_open, _humidity_should_open)
-        if settings.priority == Priority.TEMPERATURE
-        else (_humidity_should_open, _temperature_should_open)
+    temperature_advice = _temperature_advice(
+        settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
+    )
+    humidity_advice = _humidity_advice(
+        settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
     )
 
-    for check in checks:
-        result = check(settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh)
-        if result is not None:
-            return result
-    return None
+    if any_open is not None:
+        temperature_advice = _apply_contact_state(temperature_advice, any_open)
+        humidity_advice = _apply_contact_state(humidity_advice, any_open)
+
+    return _prioritized_advice(settings, temperature_advice, humidity_advice)
 
 
-def _temperature_should_open(
+def _apply_contact_state(advice: Advice | None, any_open: bool) -> Advice | None:
+    """Translate action advice to keep-state advice when contact state is known."""
+
+    if any_open and advice == Advice.OPEN:
+        return Advice.KEEP_OPEN
+    if not any_open and advice == Advice.CLOSE:
+        return Advice.KEEP_CLOSED
+    return advice
+
+
+def _prioritized_advice(
+    settings: ComfortSettings,
+    temperature_advice: Advice | None,
+    humidity_advice: Advice | None,
+) -> Advice | None:
+    primary, fallback = (
+        (temperature_advice, humidity_advice)
+        if settings.priority == Priority.TEMPERATURE
+        else (humidity_advice, temperature_advice)
+    )
+
+    return primary if primary is not None else fallback
+
+
+def _temperature_advice(
     settings: ComfortSettings,
     indoor_temp: float | None,
     outdoor_temp: float | None,
     indoor_rh: float | None,
     projected_rh: float | None,
-) -> bool | None:
+) -> Advice | None:
     del indoor_rh, projected_rh
     if indoor_temp is None or outdoor_temp is None:
         return None
-    if indoor_temp > settings.temp_max:
-        return outdoor_temp < indoor_temp
-    if indoor_temp < settings.temp_min:
-        return outdoor_temp > indoor_temp
-    return None
+    if indoor_temp > settings.temp_max and outdoor_temp < indoor_temp:
+        return Advice.OPEN
+    if indoor_temp < settings.temp_min and outdoor_temp > indoor_temp:
+        return Advice.OPEN
+    return Advice.CLOSE
 
 
-def _humidity_should_open(
+def _humidity_advice(
     settings: ComfortSettings,
     indoor_temp: float | None,
     outdoor_temp: float | None,
     indoor_rh: float | None,
     projected_rh: float | None,
-) -> bool | None:
+) -> Advice | None:
     del indoor_temp, outdoor_temp
     if indoor_rh is None or projected_rh is None:
         return None
-    if indoor_rh > settings.rh_max:
-        return projected_rh < indoor_rh
-    if indoor_rh < settings.rh_min:
-        return projected_rh > indoor_rh
-    return None
+    if indoor_rh > settings.rh_max and projected_rh < indoor_rh:
+        return Advice.OPEN
+    if indoor_rh < settings.rh_min and projected_rh > indoor_rh:
+        return Advice.OPEN
+    return Advice.CLOSE

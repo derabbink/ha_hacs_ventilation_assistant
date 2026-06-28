@@ -37,7 +37,10 @@ Calculated entities return unavailable when their required inputs are missing or
 - Absolute humidity requires temperature and relative humidity.
 - Projected indoor absolute humidity requires indoor temperature and outdoor absolute humidity.
 - Projected indoor relative humidity requires indoor temperature and projected absolute humidity.
-- Door/window sensors and advice require at least one available contact sensor.
+- Door/window sensors require at least one available contact sensor.
+- Advice requires either available indoor/outdoor temperature values or available
+  indoor/projected relative-humidity values. Without an available contact sensor,
+  advice is limited to `OPEN` or `CLOSE`.
 
 ## HACS installation during development
 

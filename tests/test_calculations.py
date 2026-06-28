@@ -50,6 +50,70 @@ class CalculationTests(unittest.TestCase):
 
         self.assertEqual(advice, Advice.OPEN)
 
+    def test_advises_open_without_contact_state_when_cooling_helps(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_advises_close_without_contact_state_when_temperature_does_not_help(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_known_open_contact_changes_open_to_keep_open(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=True,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.KEEP_OPEN)
+
+    def test_known_closed_contact_changes_close_to_keep_closed(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=False,
+            indoor_temp=22,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.KEEP_CLOSED)
+
+    def test_temperature_priority_falls_back_to_humidity_when_temperature_missing(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE),
+            any_open=None,
+            indoor_temp=None,
+            outdoor_temp=None,
+            indoor_rh=70,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
     def test_humidity_priority_advises_close_when_outdoor_air_worsens_humidity(
         self,
     ) -> None:
@@ -63,6 +127,34 @@ class CalculationTests(unittest.TestCase):
         )
 
         self.assertEqual(advice, Advice.CLOSE)
+
+    def test_humidity_priority_falls_back_to_temperature_when_humidity_missing(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_advice_unavailable_when_no_temperature_or_humidity_advice_exists(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY),
+            any_open=False,
+            indoor_temp=None,
+            outdoor_temp=None,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertIsNone(advice)
 
 
 if __name__ == "__main__":
