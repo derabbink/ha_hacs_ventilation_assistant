@@ -4,39 +4,14 @@ Ventilation Assistant is a Home Assistant custom integration for HACS. It create
 
 ## Model
 
-The integration does not create Home Assistant helpers or visible configuration entries. Everything is configured from YAML, and the integration only creates the resulting entities/devices.
+The integration is fully configurable from the Home Assistant UI. Configuration is stored by Home Assistant as config entries in `.storage/core.config_entries`; it does not create Home Assistant Helpers.
 
-Add this to `/config/configuration.yaml`:
+Use the config flow to create:
 
-```yaml
-ventilation_assistant:
-```
+- one global defaults entry for the shared comfort temperature band, comfort relative-humidity band, and decision priority
+- one ventilation device entry per room/area/device
 
-Global defaults and ventilation devices are loaded behind the scenes from `/config/ventilation_assistant.yaml`. If that file does not exist, the built-in defaults are used and no devices are created:
-
-```yaml
-comfort_temp_min: 19.0
-comfort_temp_max: 24.0
-comfort_rh_min: 40.0
-comfort_rh_max: 60.0
-priority: TEMPERATURE
-
-devices:
-  - id: living_room
-    name: Living room
-    indoor_temp_entities:
-      - sensor.living_room_temperature
-    indoor_humidity_entities:
-      - sensor.living_room_humidity
-    outdoor_temp_entities:
-      - sensor.outdoor_temperature
-    outdoor_humidity_entities:
-      - sensor.outdoor_humidity
-    door_window_entities:
-      - binary_sensor.living_room_window
-```
-
-`priority` can be `TEMPERATURE` or `HUMIDITY`. Each device can override any global default, or leave that field absent to inherit the global setting. Restart Home Assistant after changing this file.
+`priority` can be `TEMPERATURE` or `HUMIDITY`. Each device can override any global default, or leave that field empty to inherit the global setting.
 
 Each ventilation device creates a Home Assistant device containing:
 
@@ -66,6 +41,6 @@ Calculated entities return unavailable when their required inputs are missing or
 
 ## HACS installation during development
 
-Copy or symlink this repository into Home Assistant, or add it as a HACS custom repository with category `Integration`. After installing, add `ventilation_assistant:` to `/config/configuration.yaml`, create `/config/ventilation_assistant.yaml`, and restart Home Assistant.
+Copy or symlink this repository into Home Assistant, or add it as a HACS custom repository with category `Integration`. After installing, restart Home Assistant and add **Ventilation Assistant** from **Settings > Devices & services**.
 
-Create one YAML device per room. To change global defaults or devices, edit `/config/ventilation_assistant.yaml` and restart Home Assistant.
+Create the global defaults entry first, then create one ventilation device per room.

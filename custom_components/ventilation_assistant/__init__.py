@@ -6,8 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
@@ -17,7 +15,6 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.typing import StateType
 
@@ -36,41 +33,31 @@ from .const import (
     CONF_COMFORT_TEMP_MAX,
     CONF_COMFORT_TEMP_MIN,
     CONF_DEVICE,
-    CONF_DEVICES,
     CONF_DOOR_WINDOW_ENTITIES,
-    CONF_ID,
+    CONF_GLOBAL,
     CONF_INDOOR_HUMIDITY_ENTITIES,
     CONF_INDOOR_TEMP_ENTITIES,
     CONF_KIND,
     CONF_OUTDOOR_HUMIDITY_ENTITIES,
     CONF_OUTDOOR_TEMP_ENTITIES,
     CONF_PRIORITY,
-    DATA_COORDINATORS,
     DATA_GLOBAL_OPTIONS,
     DEFAULT_COMFORT_RH_MAX,
     DEFAULT_COMFORT_RH_MIN,
     DEFAULT_COMFORT_TEMP_MAX,
     DEFAULT_COMFORT_TEMP_MIN,
     DOMAIN,
-    GLOBAL_CONFIG_FILE,
     PLATFORMS,
     Priority,
 )
-from .settings import default_global_options, load_yaml_config
 
 VentilationConfigEntry = ConfigEntry
-
-CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Any(None, vol.Schema({}))}, extra=vol.ALLOW_EXTRA)
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up global state for Ventilation Assistant."""
 
     hass.data.setdefault(DOMAIN, {})
-    await _async_load_yaml_config(hass)
-    if hass.data[DOMAIN][DATA_COORDINATORS]:
-        for platform in PLATFORMS:
-            await discovery.async_load_platform(hass, platform, DOMAIN, {}, config)
     return True
 
 
@@ -80,10 +67,10 @@ async def async_setup_entry(
     """Set up Ventilation Assistant from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
-    if DATA_GLOBAL_OPTIONS not in hass.data[DOMAIN]:
-        await _async_load_yaml_config(hass)
 
-    if entry.data.get(CONF_KIND) != CONF_DEVICE:
+    if entry.data[CONF_KIND] == CONF_GLOBAL:
+        hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = dict(entry.options)
+        entry.async_on_unload(entry.add_update_listener(_async_update_listener))
         return True
 
     coordinator = VentilationCoordinator.from_entry(hass, entry)
@@ -99,7 +86,8 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
 
-    if entry.data.get(CONF_KIND) != CONF_DEVICE:
+    if entry.data[CONF_KIND] == CONF_GLOBAL:
+        hass.data[DOMAIN].pop(DATA_GLOBAL_OPTIONS, None)
         return True
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -115,34 +103,10 @@ async def _async_update_listener(
     """Reload entries when options change."""
 
     await hass.config_entries.async_reload(entry.entry_id)
-
-
-async def _async_load_yaml_config(hass: HomeAssistant) -> None:
-    """Load hidden YAML config and build coordinators."""
-
-    path = hass.config.path(GLOBAL_CONFIG_FILE)
-    yaml_config = await hass.async_add_executor_job(load_yaml_config, path)
-    hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = yaml_config["global_options"]
-    coordinators = [
-        VentilationCoordinator.from_yaml(hass, device)
-        for device in yaml_config[CONF_DEVICES]
-    ]
-    hass.data[DOMAIN][DATA_COORDINATORS] = coordinators
-    await _async_setup_coordinators(coordinators)
-
-
-async def _async_setup_coordinators(coordinators: list[VentilationCoordinator]) -> None:
-    """Start all YAML-backed coordinators."""
-
-    for coordinator in coordinators:
-        await coordinator.async_setup()
-
-
-def async_unload_yaml(hass: HomeAssistant) -> None:
-    """Unload YAML-backed coordinators."""
-
-    for coordinator in hass.data.get(DOMAIN, {}).get(DATA_COORDINATORS, []):
-        coordinator.async_unload()
+    if entry.data[CONF_KIND] == CONF_GLOBAL:
+        for other_entry in hass.config_entries.async_entries(DOMAIN):
+            if other_entry.data[CONF_KIND] == CONF_DEVICE:
+                await hass.config_entries.async_reload(other_entry.entry_id)
 
 
 @dataclass(frozen=True)
@@ -154,33 +118,6 @@ class VentilationDeviceConfig:
     options: dict[str, Any]
 
     @classmethod
-    def from_yaml(cls, device: dict[str, Any]) -> VentilationDeviceConfig:
-        """Create a device config from YAML."""
-
-        name = str(device[CONF_NAME])
-        device_id = str(device.get(CONF_ID) or _slugify(name))
-        options = {
-            key: device.get(key, [])
-            for key in (
-                CONF_INDOOR_TEMP_ENTITIES,
-                CONF_INDOOR_HUMIDITY_ENTITIES,
-                CONF_OUTDOOR_TEMP_ENTITIES,
-                CONF_OUTDOOR_HUMIDITY_ENTITIES,
-                CONF_DOOR_WINDOW_ENTITIES,
-            )
-        }
-        for key in (
-            CONF_COMFORT_TEMP_MIN,
-            CONF_COMFORT_TEMP_MAX,
-            CONF_COMFORT_RH_MIN,
-            CONF_COMFORT_RH_MAX,
-            CONF_PRIORITY,
-        ):
-            if key in device and device[key] not in (None, ""):
-                options[key] = device[key]
-        return cls(id=device_id, name=name, options=options)
-
-    @classmethod
     def from_entry(cls, entry: VentilationConfigEntry) -> VentilationDeviceConfig:
         """Create a device config from a legacy config entry."""
 
@@ -189,19 +126,6 @@ class VentilationDeviceConfig:
             name=entry.data[CONF_NAME],
             options=dict(entry.options),
         )
-
-
-def _slugify(value: str) -> str:
-    """Create a stable-enough id from a YAML device name."""
-
-    slug = "".join(char.lower() if char.isalnum() else "_" for char in value)
-    return "_".join(part for part in slug.split("_") if part)
-
-
-def yaml_coordinators(hass: HomeAssistant) -> list[VentilationCoordinator]:
-    """Return YAML-backed coordinators."""
-
-    return list(hass.data.get(DOMAIN, {}).get(DATA_COORDINATORS, []))
 
 
 @dataclass
@@ -234,14 +158,6 @@ class VentilationCoordinator:
         self.device_name = config.name
         self._listeners: list[Callable[[], None]] = []
         self._remove_state_listener: Callable[[], None] | None = None
-
-    @classmethod
-    def from_yaml(
-        cls, hass: HomeAssistant, device: dict[str, Any]
-    ) -> VentilationCoordinator:
-        """Create a YAML-backed coordinator."""
-
-        return cls(hass, VentilationDeviceConfig.from_yaml(device))
 
     @classmethod
     def from_entry(
@@ -439,3 +355,15 @@ def _temperature_to_celsius(value: float, unit: str | None) -> float:
     if unit == UnitOfTemperature.FAHRENHEIT:
         return round((value - 32) * 5 / 9, 2)
     return value
+
+
+def default_global_options() -> dict[str, Any]:
+    """Return built-in global defaults."""
+
+    return {
+        CONF_COMFORT_TEMP_MIN: DEFAULT_COMFORT_TEMP_MIN,
+        CONF_COMFORT_TEMP_MAX: DEFAULT_COMFORT_TEMP_MAX,
+        CONF_COMFORT_RH_MIN: DEFAULT_COMFORT_RH_MIN,
+        CONF_COMFORT_RH_MAX: DEFAULT_COMFORT_RH_MAX,
+        CONF_PRIORITY: Priority.TEMPERATURE.value,
+    }
