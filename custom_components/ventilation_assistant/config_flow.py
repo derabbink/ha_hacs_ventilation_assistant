@@ -9,6 +9,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
@@ -42,33 +43,12 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Route the user to global settings or virtual device creation."""
+        """Set up global defaults."""
 
-        if user_input is not None:
-            if user_input[CONF_KIND] == CONF_GLOBAL:
-                return await self.async_step_global()
-            return await self.async_step_device()
+        if self._async_current_entries():
+            return self.async_abort(reason="already_configured")
 
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_KIND): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(
-                                    value=CONF_GLOBAL, label="Configure global defaults"
-                                ),
-                                selector.SelectOptionDict(
-                                    value=CONF_DEVICE, label="Create ventilation device"
-                                ),
-                            ],
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    )
-                }
-            ),
-        )
+        return await self.async_step_global(user_input)
 
     async def async_step_global(
         self, user_input: dict[str, Any] | None = None
@@ -90,26 +70,6 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=_global_schema(),
         )
 
-    async def async_step_device(
-        self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Create one virtual ventilation device."""
-
-        if user_input is not None:
-            name = user_input[CONF_NAME]
-            await self.async_set_unique_id(f"{CONF_DEVICE}:{name.casefold()}")
-            self._abort_if_unique_id_configured()
-            return self.async_create_entry(
-                title=name,
-                data={CONF_KIND: CONF_DEVICE, CONF_NAME: name},
-                options=_device_options(user_input),
-            )
-
-        return self.async_show_form(
-            step_id="device",
-            data_schema=_device_schema(),
-        )
-
     @staticmethod
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
@@ -117,6 +77,17 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Return the options flow."""
 
         return VentilationAssistantOptionsFlow(config_entry)
+
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: config_entries.ConfigEntry
+    ) -> dict[str, type[config_entries.ConfigSubentryFlow]]:
+        """Return subentry flows supported by this config entry."""
+
+        if config_entry.data[CONF_KIND] != CONF_GLOBAL:
+            return {}
+        return {CONF_DEVICE: VentilationDeviceSubentryFlow}
 
 
 class VentilationAssistantOptionsFlow(config_entries.OptionsFlow):
@@ -155,6 +126,62 @@ class VentilationAssistantOptionsFlow(config_entries.OptionsFlow):
                     CONF_NAME: self._config_entry.data[CONF_NAME],
                 }
             ),
+        )
+
+
+class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
+    """Handle virtual ventilation device subentries."""
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Create one virtual ventilation device."""
+
+        if user_input is not None:
+            name = user_input[CONF_NAME]
+            if self._name_exists(name):
+                return self.async_abort(reason="already_configured")
+
+            return self.async_create_entry(
+                title=name,
+                data=_device_options(user_input),
+            )
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=_device_schema(),
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.SubentryFlowResult:
+        """Reconfigure one virtual ventilation device."""
+
+        subentry = self._get_reconfigure_subentry()
+        if user_input is not None:
+            return self.async_update_and_abort(
+                self._get_entry(),
+                subentry,
+                data=_device_options(user_input),
+                title=subentry.title,
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_device_schema(
+                {
+                    **subentry.data,
+                    CONF_NAME: subentry.title,
+                }
+            ),
+        )
+
+    def _name_exists(self, name: str) -> bool:
+        """Return whether another device subentry already uses this name."""
+
+        return any(
+            subentry.title.casefold() == name.casefold()
+            for subentry in self._get_entry().get_subentries_of_type(CONF_DEVICE)
         )
 
 

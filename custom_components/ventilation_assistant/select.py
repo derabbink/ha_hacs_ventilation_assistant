@@ -6,19 +6,30 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator
-from .const import CONF_PRIORITY, DOMAIN, Priority
+from . import (
+    VentilationCoordinator,
+    async_update_device_options,
+    coordinators_for_entry,
+)
+from .const import CONF_GLOBAL, CONF_KIND, CONF_PRIORITY, DOMAIN, Priority
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Ventilation Assistant selects."""
 
-    coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([VentilationPrioritySelect(entry, coordinator)])
+    for coordinator in coordinators_for_entry(hass, entry):
+        kwargs = (
+            {"config_subentry_id": coordinator.device_id}
+            if entry.data[CONF_KIND] == CONF_GLOBAL
+            else {}
+        )
+        async_add_entities([VentilationPrioritySelect(entry, coordinator)], **kwargs)
 
 
 class VentilationPrioritySelect(SelectEntity):
@@ -66,8 +77,10 @@ class VentilationPrioritySelect(SelectEntity):
         if option not in self.options:
             return
 
-        options = dict(self._entry.options)
+        options = (
+            dict(self.coordinator.config.options)
+            if self._entry.data.get(CONF_KIND) == CONF_GLOBAL
+            else dict(self._entry.options)
+        )
         options[CONF_PRIORITY] = option
-        self.hass.config_entries.async_update_entry(self._entry, options=options)
-        self.coordinator.async_update_options(options)
-
+        async_update_device_options(self.hass, self._entry, self.coordinator, options)

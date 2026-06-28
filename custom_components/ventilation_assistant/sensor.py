@@ -14,10 +14,10 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator
-from .const import Advice, DOMAIN
+from . import VentilationCoordinator, coordinators_for_entry
+from .const import Advice, CONF_GLOBAL, CONF_KIND, DOMAIN
 
 ABSOLUTE_HUMIDITY_UNIT = "g/m³"
 
@@ -138,15 +138,25 @@ SENSOR_DESCRIPTIONS = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Ventilation Assistant sensors."""
 
-    coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        VentilationSensor(coordinator, description)
-        for description in SENSOR_DESCRIPTIONS
-    )
+    for coordinator in coordinators_for_entry(hass, entry):
+        kwargs = (
+            {"config_subentry_id": coordinator.device_id}
+            if entry.data[CONF_KIND] == CONF_GLOBAL
+            else {}
+        )
+        async_add_entities(
+            (
+                VentilationSensor(coordinator, description)
+                for description in SENSOR_DESCRIPTIONS
+            ),
+            **kwargs,
+        )
 
 
 class VentilationSensor(SensorEntity):

@@ -9,7 +9,7 @@ The integration is fully configurable from the Home Assistant UI. Configuration 
 Use the config flow to create:
 
 - one global defaults entry for the shared comfort temperature band, comfort relative-humidity band, and decision priority
-- one ventilation device entry per room/area/device
+- one or more ventilation device subentries under that entry
 
 `priority` can be `TEMPERATURE` or `HUMIDITY`. Each device can override any global default, or leave that field empty to inherit the global setting.
 
@@ -48,4 +48,4 @@ Calculated entities return unavailable when their required inputs are missing or
 
 Copy or symlink this repository into Home Assistant, or add it as a HACS custom repository with category `Integration`. After installing, restart Home Assistant and add **Ventilation Assistant** from **Settings > Devices & services**.
 
-Create the global defaults entry first, then create one ventilation device per room.
+Complete the global defaults form during first setup. After that, use **Add device** to add each ventilation device directly. Use the gear icon on the **Ventilation Assistant** integration entry to change the global defaults later. Use the configure action on a ventilation device subentry to change the input entities for that virtual device.

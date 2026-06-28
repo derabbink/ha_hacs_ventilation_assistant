@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
@@ -69,7 +70,15 @@ async def async_setup_entry(
     hass.data.setdefault(DOMAIN, {})
 
     if entry.data[CONF_KIND] == CONF_GLOBAL:
-        hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = dict(entry.options)
+        hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = _global_options_from_entry(entry)
+        coordinators = [
+            VentilationCoordinator(hass, VentilationDeviceConfig.from_subentry(subentry))
+            for subentry in entry.get_subentries_of_type(CONF_DEVICE)
+        ]
+        hass.data[DOMAIN][entry.entry_id] = coordinators
+        for coordinator in coordinators:
+            await coordinator.async_setup()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         entry.async_on_unload(entry.add_update_listener(_async_update_listener))
         return True
 
@@ -87,8 +96,15 @@ async def async_unload_entry(
     """Unload a config entry."""
 
     if entry.data[CONF_KIND] == CONF_GLOBAL:
-        hass.data[DOMAIN].pop(DATA_GLOBAL_OPTIONS, None)
-        return True
+        unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+        if unload_ok:
+            coordinators: list[VentilationCoordinator] = hass.data[DOMAIN].pop(
+                entry.entry_id, []
+            )
+            for coordinator in coordinators:
+                coordinator.async_unload()
+            hass.data[DOMAIN].pop(DATA_GLOBAL_OPTIONS, None)
+        return unload_ok
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
@@ -109,6 +125,39 @@ async def _async_update_listener(
                 await hass.config_entries.async_reload(other_entry.entry_id)
 
 
+def coordinators_for_entry(
+    hass: HomeAssistant, entry: VentilationConfigEntry
+) -> list["VentilationCoordinator"]:
+    """Return all coordinators owned by a config entry."""
+
+    coordinators = hass.data[DOMAIN][entry.entry_id]
+    if isinstance(coordinators, list):
+        return coordinators
+    return [coordinators]
+
+
+@callback
+def async_update_device_options(
+    hass: HomeAssistant,
+    entry: VentilationConfigEntry,
+    coordinator: "VentilationCoordinator",
+    options: dict[str, Any],
+) -> None:
+    """Persist device options for global-owned and legacy device entries."""
+
+    if entry.data[CONF_KIND] == CONF_GLOBAL:
+        for subentry in entry.subentries.values():
+            if subentry.subentry_id == coordinator.device_id:
+                hass.config_entries.async_update_subentry(
+                    entry, subentry, data=options
+                )
+                break
+    else:
+        hass.config_entries.async_update_entry(entry, options=options)
+
+    coordinator.async_update_options(options)
+
+
 @dataclass(frozen=True)
 class VentilationDeviceConfig:
     """Configuration for one virtual ventilation device."""
@@ -125,6 +174,18 @@ class VentilationDeviceConfig:
             id=entry.entry_id,
             name=entry.data[CONF_NAME],
             options=dict(entry.options),
+        )
+
+    @classmethod
+    def from_subentry(
+        cls, subentry: config_entries.ConfigSubentry
+    ) -> VentilationDeviceConfig:
+        """Create a device config from a config subentry."""
+
+        return cls(
+            id=subentry.subentry_id,
+            name=subentry.title,
+            options=dict(subentry.data),
         )
 
 
@@ -387,3 +448,13 @@ def default_global_options() -> dict[str, Any]:
         CONF_COMFORT_RH_MAX: DEFAULT_COMFORT_RH_MAX,
         CONF_PRIORITY: Priority.TEMPERATURE.value,
     }
+
+
+def _global_options_from_entry(entry: VentilationConfigEntry) -> dict[str, Any]:
+    """Return only the options that act as global defaults."""
+
+    options = default_global_options()
+    for key in options:
+        if key in entry.options:
+            options[key] = entry.options[key]
+    return options

@@ -5,19 +5,26 @@ from __future__ import annotations
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator
-from .const import DOMAIN
+from . import VentilationCoordinator, coordinators_for_entry
+from .const import CONF_GLOBAL, CONF_KIND, DOMAIN
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Ventilation Assistant binary sensors."""
 
-    coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([AnyDoorWindowOpenBinarySensor(coordinator)])
+    for coordinator in coordinators_for_entry(hass, entry):
+        kwargs = (
+            {"config_subentry_id": coordinator.device_id}
+            if entry.data[CONF_KIND] == CONF_GLOBAL
+            else {}
+        )
+        async_add_entities([AnyDoorWindowOpenBinarySensor(coordinator)], **kwargs)
 
 
 class AnyDoorWindowOpenBinarySensor(BinarySensorEntity):

@@ -13,14 +13,20 @@ from homeassistant.components.number import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator
+from . import (
+    VentilationCoordinator,
+    async_update_device_options,
+    coordinators_for_entry,
+)
 from .const import (
     CONF_COMFORT_RH_MAX,
     CONF_COMFORT_RH_MIN,
     CONF_COMFORT_TEMP_MAX,
     CONF_COMFORT_TEMP_MIN,
+    CONF_GLOBAL,
+    CONF_KIND,
     DOMAIN,
 )
 
@@ -77,15 +83,25 @@ NUMBER_DESCRIPTIONS = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Ventilation Assistant numbers."""
 
-    coordinator: VentilationCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        VentilationNumber(entry, coordinator, description)
-        for description in NUMBER_DESCRIPTIONS
-    )
+    for coordinator in coordinators_for_entry(hass, entry):
+        kwargs = (
+            {"config_subentry_id": coordinator.device_id}
+            if entry.data[CONF_KIND] == CONF_GLOBAL
+            else {}
+        )
+        async_add_entities(
+            (
+                VentilationNumber(entry, coordinator, description)
+                for description in NUMBER_DESCRIPTIONS
+            ),
+            **kwargs,
+        )
 
 
 class VentilationNumber(NumberEntity):
@@ -143,7 +159,7 @@ class VentilationNumber(NumberEntity):
         """Update the configured value."""
 
         options: dict[str, Any] = dict(self._entry.options)
+        if self._entry.data.get(CONF_KIND) == CONF_GLOBAL:
+            options = dict(self.coordinator.config.options)
         options[self.entity_description.option_key] = value
-        self.hass.config_entries.async_update_entry(self._entry, options=options)
-        self.coordinator.async_update_options(options)
-
+        async_update_device_options(self.hass, self._entry, self.coordinator, options)

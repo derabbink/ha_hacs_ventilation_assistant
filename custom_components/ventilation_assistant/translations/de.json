@@ -39,6 +39,47 @@
       "already_configured": "Dieser Eintrag ist bereits vorhanden."
     }
   },
+  "config_subentries": {
+    "device": {
+      "title": "Lüftungsgerät",
+      "step": {
+        "user": {
+          "title": "Lüftungsgerät",
+          "data": {
+            "name": "Name",
+            "indoor_temp_entities": "Innentemperatur-Sensoren",
+            "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+            "outdoor_temp_entities": "Außentemperatur-Sensoren",
+            "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+            "door_window_entities": "Tür-/Fenstersensoren",
+            "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
+            "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
+            "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
+            "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+            "priority": "Priorität überschreiben"
+          }
+        },
+        "reconfigure": {
+          "title": "Lüftungsgerät konfigurieren",
+          "data": {
+            "indoor_temp_entities": "Innentemperatur-Sensoren",
+            "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+            "outdoor_temp_entities": "Außentemperatur-Sensoren",
+            "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+            "door_window_entities": "Tür-/Fenstersensoren",
+            "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
+            "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
+            "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
+            "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+            "priority": "Priorität überschreiben"
+          }
+        }
+      },
+      "abort": {
+        "already_configured": "Dieses Lüftungsgerät ist bereits vorhanden."
+      }
+    }
+  },
   "options": {
     "step": {
       "init": {
