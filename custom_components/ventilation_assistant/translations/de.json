@@ -124,6 +124,25 @@
       "any_door_window_open": {
         "name": "Türen/Fenster offen"
       }
+    },
+    "number": {
+      "comfort_temp_min": {
+        "name": "Minimale Komfort-Innentemperatur"
+      },
+      "comfort_temp_max": {
+        "name": "Maximale Komfort-Innentemperatur"
+      },
+      "comfort_rh_min": {
+        "name": "Minimale Komfort-Luftfeuchtigkeit innen"
+      },
+      "comfort_rh_max": {
+        "name": "Maximale Komfort-Luftfeuchtigkeit innen"
+      }
+    },
+    "select": {
+      "priority": {
+        "name": "Priorität"
+      }
     }
   }
 }

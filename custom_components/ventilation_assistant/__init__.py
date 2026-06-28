@@ -224,6 +224,20 @@ class VentilationCoordinator:
     def _async_input_changed(self, event: Any) -> None:
         """Notify entities that one of the inputs changed."""
 
+        self._async_notify_listeners()
+
+    @callback
+    def async_update_options(self, options: dict[str, Any]) -> None:
+        """Update in-memory options and notify entities."""
+
+        self.config.options.clear()
+        self.config.options.update(options)
+        self._async_notify_listeners()
+
+    @callback
+    def _async_notify_listeners(self) -> None:
+        """Notify entities that derived state changed."""
+
         for listener in self._listeners:
             listener()
 

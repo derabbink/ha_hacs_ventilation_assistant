@@ -6,7 +6,7 @@ from enum import Enum
 
 DOMAIN = "ventilation_assistant"
 
-PLATFORMS = ["sensor", "binary_sensor"]
+PLATFORMS = ["sensor", "binary_sensor", "number", "select"]
 
 DATA_GLOBAL_OPTIONS = "global_options"
 

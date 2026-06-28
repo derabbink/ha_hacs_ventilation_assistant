@@ -124,6 +124,25 @@
       "any_door_window_open": {
         "name": "Any doors/windows open"
       }
+    },
+    "number": {
+      "comfort_temp_min": {
+        "name": "Indoor comfort temperature minimum"
+      },
+      "comfort_temp_max": {
+        "name": "Indoor comfort temperature maximum"
+      },
+      "comfort_rh_min": {
+        "name": "Indoor comfort humidity minimum"
+      },
+      "comfort_rh_max": {
+        "name": "Indoor comfort humidity maximum"
+      }
+    },
+    "select": {
+      "priority": {
+        "name": "Priority"
+      }
     }
   }
 }
