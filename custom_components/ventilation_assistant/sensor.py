@@ -174,6 +174,7 @@ class VentilationSensor(SensorEntity):
 
         self.coordinator = coordinator
         self.entity_description = description
+        self._attr_translation_key = description.translation_key
         self._attr_unique_id = f"{coordinator.device_id}_{description.key}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.device_id)},

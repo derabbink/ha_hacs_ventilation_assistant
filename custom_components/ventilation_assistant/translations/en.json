@@ -182,7 +182,11 @@
     },
     "select": {
       "priority": {
-        "name": "Priority"
+        "name": "Priority",
+        "state": {
+          "TEMPERATURE": "Temperature",
+          "HUMIDITY": "Humidity"
+        }
       }
     }
   }
