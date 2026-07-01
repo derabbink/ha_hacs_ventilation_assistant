@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -11,13 +11,15 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VentilationCoordinator, coordinators_for_entry
-from .const import Advice, CONF_GLOBAL, CONF_KIND, DOMAIN
+from .const import CONF_GLOBAL, CONF_KIND, DOMAIN, Advice
 
 ABSOLUTE_HUMIDITY_UNIT = "g/m³"
 

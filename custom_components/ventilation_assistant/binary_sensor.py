@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
-from homeassistant.config_entries import ConfigEntry
+from typing import TYPE_CHECKING
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VentilationCoordinator, coordinators_for_entry
 from .const import CONF_GLOBAL, CONF_KIND, DOMAIN
