@@ -58,13 +58,6 @@ from .const import (
 VentilationConfigEntry = ConfigEntry
 
 
-async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up global state for Ventilation Assistant."""
-
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
-
 async def async_setup_entry(
     hass: HomeAssistant, entry: VentilationConfigEntry
 ) -> bool:
