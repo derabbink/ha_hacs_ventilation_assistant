@@ -5,7 +5,6 @@ import pathlib
 import re
 import unittest
 
-
 ROOT = pathlib.Path(__file__).parents[1] / "custom_components" / "ventilation_assistant"
 TRANSLATIONS = ROOT / "translations"
 
