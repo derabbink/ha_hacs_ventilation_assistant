@@ -58,6 +58,37 @@ from .const import (
 VentilationConfigEntry = ConfigEntry
 
 
+async def async_migrate_entry(
+    hass: HomeAssistant, entry: VentilationConfigEntry
+) -> bool:
+    """Migrate config entry to the current version."""
+
+    if entry.version == 1 and entry.minor_version < 2:
+        if entry.data[CONF_KIND] == CONF_GLOBAL:
+            new_options = dict(entry.options)
+            if CONF_PRIORITY in new_options:
+                new_options[CONF_PRIORITY] = new_options[CONF_PRIORITY].lower()
+            hass.config_entries.async_update_entry(
+                entry, minor_version=2, options=new_options
+            )
+            for subentry in entry.subentries.values():
+                new_data = dict(subentry.data)
+                if CONF_PRIORITY in new_data:
+                    new_data[CONF_PRIORITY] = new_data[CONF_PRIORITY].lower()
+                    hass.config_entries.async_update_subentry(
+                        entry, subentry, data=new_data
+                    )
+        else:
+            new_options = dict(entry.options)
+            if CONF_PRIORITY in new_options:
+                new_options[CONF_PRIORITY] = new_options[CONF_PRIORITY].lower()
+            hass.config_entries.async_update_entry(
+                entry, minor_version=2, options=new_options
+            )
+
+    return True
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: VentilationConfigEntry
 ) -> bool:
