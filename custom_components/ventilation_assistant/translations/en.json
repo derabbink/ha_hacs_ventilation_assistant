@@ -41,6 +41,10 @@
   },
   "config_subentries": {
     "device": {
+      "entry_type": "Ventilation area",
+      "initiate_flow": {
+        "user": "Add ventilation area"
+      },
       "title": "Ventilation device",
       "step": {
         "user": {

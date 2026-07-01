@@ -41,6 +41,10 @@
   },
   "config_subentries": {
     "device": {
+      "entry_type": "Lüftungsbereich",
+      "initiate_flow": {
+        "user": "Lüftungsbereich hinzufügen"
+      },
       "title": "Lüftungsgerät",
       "step": {
         "user": {
