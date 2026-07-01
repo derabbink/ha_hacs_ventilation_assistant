@@ -35,7 +35,9 @@ def average(values: list[float]) -> float | None:
     return round(fmean(values), 2) if values else None
 
 
-def absolute_humidity(temp_c: float | None, relative_humidity: float | None) -> float | None:
+def absolute_humidity(
+    temp_c: float | None, relative_humidity: float | None
+) -> float | None:
     """Calculate absolute humidity in g/m3 from temperature in C and RH in percent."""
 
     if temp_c is None or relative_humidity is None:
@@ -44,7 +46,9 @@ def absolute_humidity(temp_c: float | None, relative_humidity: float | None) -> 
     return round((saturation_hpa * relative_humidity * 2.1674) / (273.15 + temp_c), 2)
 
 
-def relative_humidity(temp_c: float | None, absolute_humidity_g_m3: float | None) -> float | None:
+def relative_humidity(
+    temp_c: float | None, absolute_humidity_g_m3: float | None
+) -> float | None:
     """Calculate RH in percent from temperature in C and absolute humidity in g/m3."""
 
     if temp_c is None or absolute_humidity_g_m3 is None:
