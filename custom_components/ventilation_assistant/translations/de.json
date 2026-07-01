@@ -41,6 +41,10 @@
   },
   "config_subentries": {
     "device": {
+      "entry_type": "Lüftungsbereich",
+      "initiate_flow": {
+        "user": "Lüftungsbereich hinzufügen"
+      },
       "title": "Lüftungsgerät",
       "step": {
         "user": {
@@ -136,28 +140,28 @@
       "temperature_advice": {
         "name": "Temperaturempfehlung",
         "state": {
-          "KEEP_CLOSED": "Geschlossen halten",
-          "OPEN": "Öffnen",
-          "KEEP_OPEN": "Geöffnet lassen",
-          "CLOSE": "Schließen"
+          "keep_closed": "Geschlossen halten",
+          "open": "Öffnen",
+          "keep_open": "Geöffnet lassen",
+          "close": "Schließen"
         }
       },
       "humidity_advice": {
         "name": "Luftfeuchtigkeitsempfehlung",
         "state": {
-          "KEEP_CLOSED": "Geschlossen halten",
-          "OPEN": "Öffnen",
-          "KEEP_OPEN": "Geöffnet lassen",
-          "CLOSE": "Schließen"
+          "keep_closed": "Geschlossen halten",
+          "open": "Öffnen",
+          "keep_open": "Geöffnet lassen",
+          "close": "Schließen"
         }
       },
       "advice": {
         "name": "Empfehlung",
         "state": {
-          "KEEP_CLOSED": "Geschlossen halten",
-          "OPEN": "Öffnen",
-          "KEEP_OPEN": "Geöffnet lassen",
-          "CLOSE": "Schließen"
+          "keep_closed": "Geschlossen halten",
+          "open": "Öffnen",
+          "keep_open": "Geöffnet lassen",
+          "close": "Schließen"
         }
       }
     },
@@ -184,8 +188,8 @@
       "priority": {
         "name": "Priorität",
         "state": {
-          "TEMPERATURE": "Temperatur",
-          "HUMIDITY": "Luftfeuchtigkeit"
+          "temperature": "Temperatur",
+          "humidity": "Luftfeuchtigkeit"
         }
       }
     }

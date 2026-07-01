@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
@@ -17,7 +15,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.typing import StateType
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from homeassistant import config_entries
+    from homeassistant.helpers.typing import StateType
 
 from .calculations import (
     ComfortSettings,
@@ -55,10 +58,34 @@ from .const import (
 VentilationConfigEntry = ConfigEntry
 
 
-async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up global state for Ventilation Assistant."""
+async def async_migrate_entry(
+    hass: HomeAssistant, entry: VentilationConfigEntry
+) -> bool:
+    """Migrate config entry to the current version."""
 
-    hass.data.setdefault(DOMAIN, {})
+    if entry.version == 1 and entry.minor_version < 2:
+        if entry.data[CONF_KIND] == CONF_GLOBAL:
+            new_options = dict(entry.options)
+            if CONF_PRIORITY in new_options:
+                new_options[CONF_PRIORITY] = new_options[CONF_PRIORITY].lower()
+            hass.config_entries.async_update_entry(
+                entry, minor_version=2, options=new_options
+            )
+            for subentry in entry.subentries.values():
+                new_data = dict(subentry.data)
+                if CONF_PRIORITY in new_data:
+                    new_data[CONF_PRIORITY] = new_data[CONF_PRIORITY].lower()
+                    hass.config_entries.async_update_subentry(
+                        entry, subentry, data=new_data
+                    )
+        else:
+            new_options = dict(entry.options)
+            if CONF_PRIORITY in new_options:
+                new_options[CONF_PRIORITY] = new_options[CONF_PRIORITY].lower()
+            hass.config_entries.async_update_entry(
+                entry, minor_version=2, options=new_options
+            )
+
     return True
 
 
@@ -72,7 +99,9 @@ async def async_setup_entry(
     if entry.data[CONF_KIND] == CONF_GLOBAL:
         hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = _global_options_from_entry(entry)
         coordinators = [
-            VentilationCoordinator(hass, VentilationDeviceConfig.from_subentry(subentry))
+            VentilationCoordinator(
+                hass, VentilationDeviceConfig.from_subentry(subentry)
+            )
             for subentry in entry.get_subentries_of_type(CONF_DEVICE)
         ]
         hass.data[DOMAIN][entry.entry_id] = coordinators
@@ -127,7 +156,7 @@ async def _async_update_listener(
 
 def coordinators_for_entry(
     hass: HomeAssistant, entry: VentilationConfigEntry
-) -> list["VentilationCoordinator"]:
+) -> list[VentilationCoordinator]:
     """Return all coordinators owned by a config entry."""
 
     coordinators = hass.data[DOMAIN][entry.entry_id]
@@ -140,7 +169,7 @@ def coordinators_for_entry(
 def async_update_device_options(
     hass: HomeAssistant,
     entry: VentilationConfigEntry,
-    coordinator: "VentilationCoordinator",
+    coordinator: VentilationCoordinator,
     options: dict[str, Any],
 ) -> None:
     """Persist device options for global-owned and legacy device entries."""
@@ -305,14 +334,24 @@ class VentilationCoordinator:
     def snapshot(self) -> VentilationSnapshot:
         """Compute the latest virtual device snapshot."""
 
-        indoor_temp = average(self._numeric_states(CONF_INDOOR_TEMP_ENTITIES, "temperature"))
-        indoor_rh = average(self._numeric_states(CONF_INDOOR_HUMIDITY_ENTITIES, PERCENTAGE))
-        outdoor_temp = average(self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature"))
-        outdoor_rh = average(self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE))
+        indoor_temp = average(
+            self._numeric_states(CONF_INDOOR_TEMP_ENTITIES, "temperature")
+        )
+        indoor_rh = average(
+            self._numeric_states(CONF_INDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
+        )
+        outdoor_temp = average(
+            self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature")
+        )
+        outdoor_rh = average(
+            self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
+        )
 
         indoor_ah = absolute_humidity(indoor_temp, indoor_rh)
         outdoor_ah = absolute_humidity(outdoor_temp, outdoor_rh)
-        projected_ah = outdoor_ah if indoor_temp is not None and outdoor_ah is not None else None
+        projected_ah = (
+            outdoor_ah if indoor_temp is not None and outdoor_ah is not None else None
+        )
         projected_rh = relative_humidity(indoor_temp, projected_ah)
         any_open, open_count, total_count = self._open_counts()
 
@@ -342,7 +381,9 @@ class VentilationCoordinator:
             temperature_advice=(
                 advices.temperature.value if advices.temperature is not None else None
             ),
-            humidity_advice=advices.humidity.value if advices.humidity is not None else None,
+            humidity_advice=(
+                advices.humidity.value if advices.humidity is not None else None
+            ),
             advice=advices.overall.value if advices.overall is not None else None,
         )
 
@@ -378,7 +419,10 @@ class VentilationCoordinator:
                 )
             ),
             priority=Priority(
-                options.get(CONF_PRIORITY, global_options.get(CONF_PRIORITY, Priority.TEMPERATURE))
+                options.get(
+                    CONF_PRIORITY,
+                    global_options.get(CONF_PRIORITY, Priority.TEMPERATURE),
+                )
             ),
         )
 

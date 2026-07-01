@@ -41,6 +41,10 @@
   },
   "config_subentries": {
     "device": {
+      "entry_type": "Ventilation area",
+      "initiate_flow": {
+        "user": "Add ventilation area"
+      },
       "title": "Ventilation device",
       "step": {
         "user": {
@@ -136,28 +140,28 @@
       "temperature_advice": {
         "name": "Temperature advice",
         "state": {
-          "KEEP_CLOSED": "Keep closed",
-          "OPEN": "Open",
-          "KEEP_OPEN": "Keep open",
-          "CLOSE": "Close"
+          "keep_closed": "Keep closed",
+          "open": "Open",
+          "keep_open": "Keep open",
+          "close": "Close"
         }
       },
       "humidity_advice": {
         "name": "Humidity advice",
         "state": {
-          "KEEP_CLOSED": "Keep closed",
-          "OPEN": "Open",
-          "KEEP_OPEN": "Keep open",
-          "CLOSE": "Close"
+          "keep_closed": "Keep closed",
+          "open": "Open",
+          "keep_open": "Keep open",
+          "close": "Close"
         }
       },
       "advice": {
         "name": "Advice",
         "state": {
-          "KEEP_CLOSED": "Keep closed",
-          "OPEN": "Open",
-          "KEEP_OPEN": "Keep open",
-          "CLOSE": "Close"
+          "keep_closed": "Keep closed",
+          "open": "Open",
+          "keep_open": "Keep open",
+          "close": "Close"
         }
       }
     },
@@ -184,8 +188,8 @@
       "priority": {
         "name": "Priority",
         "state": {
-          "TEMPERATURE": "Temperature",
-          "HUMIDITY": "Humidity"
+          "temperature": "Temperature",
+          "humidity": "Humidity"
         }
       }
     }

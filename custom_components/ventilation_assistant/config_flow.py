@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers import selector
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 from .const import (
     CONF_COMFORT_RH_MAX,
@@ -39,6 +40,7 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ventilation Assistant."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -336,9 +338,13 @@ def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
 def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     options = {
         CONF_INDOOR_TEMP_ENTITIES: user_input.get(CONF_INDOOR_TEMP_ENTITIES, []),
-        CONF_INDOOR_HUMIDITY_ENTITIES: user_input.get(CONF_INDOOR_HUMIDITY_ENTITIES, []),
+        CONF_INDOOR_HUMIDITY_ENTITIES: user_input.get(
+            CONF_INDOOR_HUMIDITY_ENTITIES, []
+        ),
         CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
+            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        ),
         CONF_DOOR_WINDOW_ENTITIES: user_input.get(CONF_DOOR_WINDOW_ENTITIES, []),
     }
 
