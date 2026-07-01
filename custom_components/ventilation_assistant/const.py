@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 DOMAIN = "ventilation_assistant"
 
@@ -32,14 +32,14 @@ DEFAULT_COMFORT_RH_MIN = 40.0
 DEFAULT_COMFORT_RH_MAX = 60.0
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """Ventilation advice priority."""
 
     TEMPERATURE = "TEMPERATURE"
     HUMIDITY = "HUMIDITY"
 
 
-class Advice(str, Enum):
+class Advice(StrEnum):
     """Ventilation advice."""
 
     KEEP_CLOSED = "KEEP_CLOSED"
