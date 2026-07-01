@@ -35,14 +35,14 @@ DEFAULT_COMFORT_RH_MAX = 60.0
 class Priority(StrEnum):
     """Ventilation advice priority."""
 
-    TEMPERATURE = "TEMPERATURE"
-    HUMIDITY = "HUMIDITY"
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
 
 
 class Advice(StrEnum):
     """Ventilation advice."""
 
-    KEEP_CLOSED = "KEEP_CLOSED"
-    OPEN = "OPEN"
-    KEEP_OPEN = "KEEP_OPEN"
-    CLOSE = "CLOSE"
+    KEEP_CLOSED = "keep_closed"
+    OPEN = "open"
+    KEEP_OPEN = "keep_open"
+    CLOSE = "close"
