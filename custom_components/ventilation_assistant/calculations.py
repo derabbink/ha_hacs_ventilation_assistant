@@ -119,10 +119,23 @@ def ventilation_advices(
         temperature_advice = _apply_contact_state(temperature_advice, any_open)
         humidity_advice = _apply_contact_state(humidity_advice, any_open)
 
+    if settings.priority == Priority.HUMIDITY_TEMPERATURE:
+        raw = _humidity_temperature_advice(
+            settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
+        )
+        overall = _apply_contact_state(raw, any_open) if any_open is not None else raw
+    elif settings.priority == Priority.TEMPERATURE_HUMIDITY:
+        raw = _temperature_humidity_advice(
+            settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
+        )
+        overall = _apply_contact_state(raw, any_open) if any_open is not None else raw
+    else:
+        overall = _prioritized_advice(settings, temperature_advice, humidity_advice)
+
     return VentilationAdvice(
         temperature=temperature_advice,
         humidity=humidity_advice,
-        overall=_prioritized_advice(settings, temperature_advice, humidity_advice),
+        overall=overall,
     )
 
 
@@ -148,6 +161,58 @@ def _prioritized_advice(
     )
 
     return primary if primary is not None else fallback
+
+
+def _humidity_temperature_advice(
+    settings: ComfortSettings,
+    indoor_temp: float | None,
+    outdoor_temp: float | None,
+    indoor_rh: float | None,
+    projected_rh: float | None,
+) -> Advice | None:
+    """Humidity-gated advice: humidity must be in range before temperature is checked.
+
+    OPEN when humidity is above max and opening reduces it, or when humidity is
+    within bounds but temperature is outside bounds and opening helps.
+    CLOSE when humidity is below min (guard against further drying), when
+    opening would worsen high humidity, or when both values are in range.
+    Falls back to temperature advice when no humidity data is available.
+    """
+    if indoor_rh is None or projected_rh is None:
+        return _temperature_advice(settings, indoor_temp, outdoor_temp, None, None)
+    if indoor_rh < settings.rh_min:
+        return Advice.CLOSE
+    if indoor_rh > settings.rh_max:
+        return Advice.OPEN if projected_rh < indoor_rh else Advice.CLOSE
+    # Humidity is within bounds: check temperature
+    temp_adv = _temperature_advice(settings, indoor_temp, outdoor_temp, None, None)
+    return temp_adv if temp_adv == Advice.OPEN else Advice.CLOSE
+
+
+def _temperature_humidity_advice(
+    settings: ComfortSettings,
+    indoor_temp: float | None,
+    outdoor_temp: float | None,
+    indoor_rh: float | None,
+    projected_rh: float | None,
+) -> Advice | None:
+    """Temperature-gated advice: temperature must be in range before humidity is checked.
+
+    OPEN when temperature is above max and opening cools it, or when temperature
+    is within bounds but humidity is outside bounds and opening helps.
+    CLOSE when temperature is below min (guard against further cooling), when
+    opening would worsen high temperature, or when both values are in range.
+    Falls back to humidity advice when no temperature data is available.
+    """
+    if indoor_temp is None or outdoor_temp is None:
+        return _humidity_advice(settings, None, None, indoor_rh, projected_rh)
+    if indoor_temp < settings.temp_min:
+        return Advice.CLOSE
+    if indoor_temp > settings.temp_max:
+        return Advice.OPEN if outdoor_temp < indoor_temp else Advice.CLOSE
+    # Temperature is within bounds: check humidity
+    hum_adv = _humidity_advice(settings, None, None, indoor_rh, projected_rh)
+    return hum_adv if hum_adv == Advice.OPEN else Advice.CLOSE
 
 
 def _temperature_advice(

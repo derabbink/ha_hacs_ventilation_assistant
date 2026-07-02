@@ -185,6 +185,170 @@ class CalculationTests(unittest.TestCase):
 
         self.assertIsNone(advice)
 
+    # --- Humidity-Temperature combined mode ---
+
+    def test_humidity_temperature_opens_when_humidity_high_and_opening_helps(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=20,
+            indoor_rh=70,
+            projected_rh=65,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_humidity_temperature_closes_when_humidity_high_but_opening_worsens_it(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=20,
+            indoor_rh=70,
+            projected_rh=75,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_humidity_temperature_closes_when_humidity_below_min(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=35,
+            projected_rh=30,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_humidity_temperature_opens_for_temperature_when_humidity_in_range(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_humidity_temperature_closes_when_both_values_in_range(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=18,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_humidity_temperature_falls_back_to_temperature_when_humidity_missing(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.HUMIDITY_TEMPERATURE),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=None,
+            projected_rh=None,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    # --- Temperature-Humidity combined mode ---
+
+    def test_temperature_humidity_opens_when_temperature_high_and_cooling_helps(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=18,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_temperature_humidity_closes_when_temperature_high_but_opening_worsens_it(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=26,
+            outdoor_temp=30,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_temperature_humidity_closes_when_temperature_below_min(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=17,
+            outdoor_temp=22,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_temperature_humidity_opens_for_humidity_when_temperature_in_range(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=18,
+            indoor_rh=70,
+            projected_rh=65,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
+    def test_temperature_humidity_closes_when_both_values_in_range(self) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=22,
+            outdoor_temp=18,
+            indoor_rh=50,
+            projected_rh=55,
+        )
+
+        self.assertEqual(advice, Advice.CLOSE)
+
+    def test_temperature_humidity_falls_back_to_humidity_when_temperature_missing(
+        self,
+    ) -> None:
+        advice = ventilation_advice(
+            settings=ComfortSettings(19, 24, 40, 60, Priority.TEMPERATURE_HUMIDITY),
+            any_open=None,
+            indoor_temp=None,
+            outdoor_temp=None,
+            indoor_rh=70,
+            projected_rh=65,
+        )
+
+        self.assertEqual(advice, Advice.OPEN)
+
 
 if __name__ == "__main__":
     unittest.main()

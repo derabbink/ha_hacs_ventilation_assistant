@@ -189,7 +189,9 @@
         "name": "Priorität",
         "state": {
           "temperature": "Temperatur",
-          "humidity": "Luftfeuchtigkeit"
+          "humidity": "Luftfeuchtigkeit",
+          "humidity_temperature": "Luftfeuchtigkeit-Temperatur",
+          "temperature_humidity": "Temperatur-Luftfeuchtigkeit"
         }
       }
     }

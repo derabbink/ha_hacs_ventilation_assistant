@@ -37,6 +37,8 @@ class Priority(StrEnum):
 
     TEMPERATURE = "temperature"
     HUMIDITY = "humidity"
+    HUMIDITY_TEMPERATURE = "humidity_temperature"
+    TEMPERATURE_HUMIDITY = "temperature_humidity"
 
 
 class Advice(StrEnum):
