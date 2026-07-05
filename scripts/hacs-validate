@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+docker run --rm \
+  -e GITHUB_WORKSPACE=/github/workspace \
+  -e INPUT_CATEGORY=integration \
+  -e INPUT_COMMENT=false \
+  -e INPUT_GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}" \
+  -e INPUT_IGNORE="${HACS_IGNORE:-}" \
+  -v "$PWD:/github/workspace" \
+  ghcr.io/hacs/action:main

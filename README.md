@@ -49,3 +49,32 @@ Calculated entities return unavailable when their required inputs are missing or
 Copy or symlink this repository into Home Assistant, or add it as a HACS custom repository with category `Integration`. After installing, restart Home Assistant and add **Ventilation Assistant** from **Settings > Devices & services**.
 
 Complete the global defaults form during first setup. After that, use **Add device** to add each ventilation device directly. Use the gear icon on the **Ventilation Assistant** integration entry to change the global defaults later. Use the configure action on a ventilation device subentry to change the input entities for that virtual device.
+
+## Local CI
+
+Create the local development environment with:
+
+```sh
+pipenv install --dev
+```
+
+Run the Python CI jobs individually with:
+
+```sh
+pipenv run lint
+pipenv run typecheck
+pipenv run test
+```
+
+Run the GitHub Action backed checks with Docker running:
+
+```sh
+pipenv run hacs-validate
+pipenv run hassfest
+```
+
+Run the full local CI sequence with:
+
+```sh
+pipenv run ci
+```

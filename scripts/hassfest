@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+docker run --rm \
+  -v "$PWD:/github/workspace" \
+  ghcr.io/home-assistant/hassfest
