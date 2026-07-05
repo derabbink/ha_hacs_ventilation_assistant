@@ -4,12 +4,13 @@ import json
 import pathlib
 import re
 import unittest
+from typing import Any
 
 ROOT = pathlib.Path(__file__).parents[1] / "custom_components" / "ventilation_assistant"
 TRANSLATIONS = ROOT / "translations"
 
 
-def _load_translation(language: str) -> dict:
+def _load_translation(language: str) -> dict[str, Any]:
     with (TRANSLATIONS / f"{language}.json").open(encoding="utf-8") as file:
         return json.load(file)
 
@@ -20,6 +21,7 @@ def _leaf_paths(value: object, prefix: tuple[str, ...] = ()) -> set[tuple[str, .
 
     paths: set[tuple[str, ...]] = set()
     for key, child in value.items():
+        assert isinstance(key, str)
         paths.update(_leaf_paths(child, (*prefix, key)))
     return paths
 

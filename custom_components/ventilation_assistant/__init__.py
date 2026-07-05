@@ -470,6 +470,9 @@ class VentilationCoordinator:
 
 
 def _state_float(value: StateType) -> float | None:
+    if value is None:
+        return None
+
     try:
         return float(value)
     except (TypeError, ValueError):

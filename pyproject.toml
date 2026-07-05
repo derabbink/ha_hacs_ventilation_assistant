@@ -7,6 +7,19 @@ requires-python = ">=3.13"
 lint = ["ruff"]
 format = ["ruff"]
 test = ["pytest"]
+typecheck = [
+    "aiohttp>=3.0",
+    "defusedxml>=0.7",
+    "homeassistant",
+    "Jinja2>=3.1",
+    "Pillow>=12.2.0",
+    "ty",
+]
+dev = [
+    {include-group = "lint"},
+    {include-group = "typecheck"},
+    {include-group = "test"},
+]
 
 [tool.ruff.lint]
 select = [
