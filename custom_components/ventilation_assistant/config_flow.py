@@ -202,51 +202,19 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             vol.Required(
                 CONF_COMFORT_TEMP_MIN,
                 default=defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=-30,
-                    max=50,
-                    step=0.5,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="°C",
-                )
-            ),
+            ): _temperature_number_selector(),
             vol.Required(
                 CONF_COMFORT_TEMP_MAX,
                 default=defaults.get(CONF_COMFORT_TEMP_MAX, DEFAULT_COMFORT_TEMP_MAX),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=-30,
-                    max=50,
-                    step=0.5,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="°C",
-                )
-            ),
+            ): _temperature_number_selector(),
             vol.Required(
                 CONF_COMFORT_RH_MIN,
                 default=defaults.get(CONF_COMFORT_RH_MIN, DEFAULT_COMFORT_RH_MIN),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0,
-                    max=100,
-                    step=1,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="%",
-                )
-            ),
+            ): _humidity_number_selector(),
             vol.Required(
                 CONF_COMFORT_RH_MAX,
                 default=defaults.get(CONF_COMFORT_RH_MAX, DEFAULT_COMFORT_RH_MAX),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0,
-                    max=100,
-                    step=1,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="%",
-                )
-            ),
+            ): _humidity_number_selector(),
             vol.Required(
                 CONF_PRIORITY,
                 default=defaults.get(CONF_PRIORITY, Priority.TEMPERATURE.value),
@@ -290,16 +258,16 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             ): _entity_selector("binary_sensor", ["door", "opening", "window"]),
             vol.Optional(
                 CONF_COMFORT_TEMP_MIN, default=defaults.get(CONF_COMFORT_TEMP_MIN)
-            ): vol.Any(None, float),
+            ): _temperature_number_selector(),
             vol.Optional(
                 CONF_COMFORT_TEMP_MAX, default=defaults.get(CONF_COMFORT_TEMP_MAX)
-            ): vol.Any(None, float),
+            ): _temperature_number_selector(),
             vol.Optional(
                 CONF_COMFORT_RH_MIN, default=defaults.get(CONF_COMFORT_RH_MIN)
-            ): vol.Any(None, float),
+            ): _humidity_number_selector(),
             vol.Optional(
                 CONF_COMFORT_RH_MAX, default=defaults.get(CONF_COMFORT_RH_MAX)
-            ): vol.Any(None, float),
+            ): _humidity_number_selector(),
             vol.Optional(
                 CONF_PRIORITY, default=defaults.get(CONF_PRIORITY, "")
             ): selector.SelectSelector(
@@ -329,6 +297,30 @@ def _entity_selector(
             domain=domain,
             device_class=device_class,
             multiple=True,
+        )
+    )
+
+
+def _temperature_number_selector() -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=-30,
+            max=50,
+            step=0.5,
+            mode=selector.NumberSelectorMode.BOX,
+            unit_of_measurement="°C",
+        )
+    )
+
+
+def _humidity_number_selector() -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0,
+            max=100,
+            step=1,
+            mode=selector.NumberSelectorMode.BOX,
+            unit_of_measurement="%",
         )
     )
 

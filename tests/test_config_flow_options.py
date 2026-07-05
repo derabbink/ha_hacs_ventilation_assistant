@@ -57,11 +57,14 @@ def _install_homeassistant_stubs() -> None:
         def __init__(self, config: Any) -> None:
             self.config = config
 
+    class _NumberSelector(_Selector):
+        pass
+
     selector.__dict__.update(
         {
             "EntitySelector": _Selector,
             "EntitySelectorConfig": _SelectorConfig,
-            "NumberSelector": _Selector,
+            "NumberSelector": _NumberSelector,
             "NumberSelectorConfig": _SelectorConfig,
             "NumberSelectorMode": types.SimpleNamespace(BOX="box"),
             "SelectOptionDict": lambda **kwargs: kwargs,
@@ -133,6 +136,42 @@ class ConfigFlowOptionsTests(unittest.TestCase):
             options[const.CONF_INDOOR_TEMP_ENTITIES], ["sensor.indoor_temp"]
         )
         self.assertEqual(options[const.CONF_INDOOR_HUMIDITY_ENTITIES], [])
+
+    def test_device_schema_uses_number_selectors_for_comfort_overrides(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+        selector = importlib.import_module("homeassistant.helpers.selector")
+
+        schema = config_flow._device_schema()
+
+        for key in (
+            const.CONF_COMFORT_TEMP_MIN,
+            const.CONF_COMFORT_TEMP_MAX,
+            const.CONF_COMFORT_RH_MIN,
+            const.CONF_COMFORT_RH_MAX,
+        ):
+            self.assertIsInstance(schema[key], selector.NumberSelector)
+
+        self.assertEqual(
+            schema[const.CONF_COMFORT_TEMP_MIN].config.kwargs,
+            {
+                "min": -30,
+                "max": 50,
+                "step": 0.5,
+                "mode": selector.NumberSelectorMode.BOX,
+                "unit_of_measurement": "°C",
+            },
+        )
+        self.assertEqual(
+            schema[const.CONF_COMFORT_RH_MIN].config.kwargs,
+            {
+                "min": 0,
+                "max": 100,
+                "step": 1,
+                "mode": selector.NumberSelectorMode.BOX,
+                "unit_of_measurement": "%",
+            },
+        )
 
 
 if __name__ == "__main__":
