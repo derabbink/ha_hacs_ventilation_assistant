@@ -31,6 +31,13 @@ from .const import (
     CONF_KIND,
     DOMAIN,
 )
+from .temperature_units import (
+    celsius_to_unit,
+    preferred_temperature_unit,
+    unit_to_celsius,
+)
+
+TEMPERATURE_OPTION_KEYS = {CONF_COMFORT_TEMP_MIN, CONF_COMFORT_TEMP_MAX}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -156,7 +163,10 @@ class VentilationNumber(NumberEntity):
             CONF_COMFORT_RH_MIN: settings.rh_min,
             CONF_COMFORT_RH_MAX: settings.rh_max,
         }
-        return values[self.entity_description.option_key]
+        value = values[self.entity_description.option_key]
+        if self._is_temperature_option:
+            return celsius_to_unit(value, preferred_temperature_unit(self.hass))
+        return value
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the configured value."""
@@ -164,5 +174,39 @@ class VentilationNumber(NumberEntity):
         options: dict[str, Any] = dict(self._entry.options)
         if self._entry.data.get(CONF_KIND) == CONF_GLOBAL:
             options = dict(self.coordinator.config.options)
+        if self._is_temperature_option:
+            value = unit_to_celsius(value, preferred_temperature_unit(self.hass))
         options[self.entity_description.option_key] = value
         async_update_device_options(self.hass, self._entry, self.coordinator, options)
+
+    @property
+    def native_min_value(self) -> float | None:
+        """Return the minimum value in the displayed temperature unit."""
+
+        min_value = self.entity_description.native_min_value
+        if min_value is not None and self._is_temperature_option:
+            return celsius_to_unit(min_value, preferred_temperature_unit(self.hass))
+        return min_value
+
+    @property
+    def native_max_value(self) -> float | None:
+        """Return the maximum value in the displayed temperature unit."""
+
+        max_value = self.entity_description.native_max_value
+        if max_value is not None and self._is_temperature_option:
+            return celsius_to_unit(max_value, preferred_temperature_unit(self.hass))
+        return max_value
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit shown for this number."""
+
+        if self._is_temperature_option:
+            return preferred_temperature_unit(self.hass)
+        return self.entity_description.native_unit_of_measurement
+
+    @property
+    def _is_temperature_option(self) -> bool:
+        """Return whether this number stores a temperature option."""
+
+        return self.entity_description.option_key in TEMPERATURE_OPTION_KEYS

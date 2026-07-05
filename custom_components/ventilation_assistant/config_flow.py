@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, UnitOfTemperature
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
@@ -33,6 +33,11 @@ from .const import (
     DEFAULT_COMFORT_TEMP_MIN,
     DOMAIN,
     Priority,
+)
+from .temperature_units import (
+    celsius_to_unit,
+    preferred_temperature_unit,
+    unit_to_celsius,
 )
 
 
@@ -64,12 +69,17 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(
                 title="Ventilation Assistant",
                 data={CONF_KIND: CONF_GLOBAL},
-                options=_global_options(user_input),
+                options=_global_options(
+                    user_input,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                ),
             )
 
         return self.async_show_form(
             step_id="global",
-            data_schema=_global_schema(),
+            data_schema=_global_schema(
+                temperature_unit=preferred_temperature_unit(self.hass)
+            ),
         )
 
     @staticmethod
@@ -108,16 +118,25 @@ class VentilationAssistantOptionsFlow(config_entries.OptionsFlow):
         kind = self._config_entry.data[CONF_KIND]
         if user_input is not None:
             options = (
-                _global_options(user_input)
+                _global_options(
+                    user_input,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                )
                 if kind == CONF_GLOBAL
-                else _device_options(user_input)
+                else _device_options(
+                    user_input,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                )
             )
             return self.async_create_entry(title="", data=options)
 
         if kind == CONF_GLOBAL:
             return self.async_show_form(
                 step_id="init",
-                data_schema=_global_schema(self._config_entry.options),
+                data_schema=_global_schema(
+                    self._config_entry.options,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                ),
             )
 
         return self.async_show_form(
@@ -126,7 +145,8 @@ class VentilationAssistantOptionsFlow(config_entries.OptionsFlow):
                 {
                     **self._config_entry.options,
                     CONF_NAME: self._config_entry.data[CONF_NAME],
-                }
+                },
+                temperature_unit=preferred_temperature_unit(self.hass),
             ),
         )
 
@@ -146,12 +166,17 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
 
             return self.async_create_entry(
                 title=name,
-                data=_device_options(user_input),
+                data=_device_options(
+                    user_input,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                ),
             )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_device_schema(),
+            data_schema=_device_schema(
+                temperature_unit=preferred_temperature_unit(self.hass)
+            ),
         )
 
     async def async_step_reconfigure(
@@ -164,7 +189,10 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
             return self.async_update_and_abort(
                 self._get_entry(),
                 subentry,
-                data=_device_options(user_input),
+                data=_device_options(
+                    user_input,
+                    temperature_unit=preferred_temperature_unit(self.hass),
+                ),
                 title=subentry.title,
             )
 
@@ -174,7 +202,8 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
                 {
                     **subentry.data,
                     CONF_NAME: subentry.title,
-                }
+                },
+                temperature_unit=preferred_temperature_unit(self.hass),
             ),
         )
 
@@ -187,7 +216,11 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
         )
 
 
-def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
+def _global_schema(
+    defaults: Mapping[str, Any] | None = None,
+    *,
+    temperature_unit: str = UnitOfTemperature.CELSIUS,
+) -> vol.Schema:
     defaults = defaults or {}
     return vol.Schema(
         {
@@ -201,12 +234,18 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             ): _entity_selector("sensor", "humidity"),
             vol.Required(
                 CONF_COMFORT_TEMP_MIN,
-                default=defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
-            ): _temperature_number_selector(),
+                default=_display_temperature_value(
+                    defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
+                    temperature_unit,
+                ),
+            ): _temperature_number_selector(temperature_unit),
             vol.Required(
                 CONF_COMFORT_TEMP_MAX,
-                default=defaults.get(CONF_COMFORT_TEMP_MAX, DEFAULT_COMFORT_TEMP_MAX),
-            ): _temperature_number_selector(),
+                default=_display_temperature_value(
+                    defaults.get(CONF_COMFORT_TEMP_MAX, DEFAULT_COMFORT_TEMP_MAX),
+                    temperature_unit,
+                ),
+            ): _temperature_number_selector(temperature_unit),
             vol.Required(
                 CONF_COMFORT_RH_MIN,
                 default=defaults.get(CONF_COMFORT_RH_MIN, DEFAULT_COMFORT_RH_MIN),
@@ -228,8 +267,12 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
     )
 
 
-def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
-    defaults = defaults or {}
+def _device_schema(
+    defaults: Mapping[str, Any] | None = None,
+    *,
+    temperature_unit: str = UnitOfTemperature.CELSIUS,
+) -> vol.Schema:
+    defaults = _display_temperature_defaults(defaults or {}, temperature_unit)
     schema: dict[Any, Any] = {}
     if CONF_NAME not in defaults:
         schema[vol.Required(CONF_NAME)] = str
@@ -257,10 +300,10 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 default=defaults.get(CONF_DOOR_WINDOW_ENTITIES, []),
             ): _entity_selector("binary_sensor", ["door", "opening", "window"]),
             _optional_number(CONF_COMFORT_TEMP_MIN, defaults): (
-                _temperature_number_selector()
+                _temperature_number_selector(temperature_unit)
             ),
             _optional_number(CONF_COMFORT_TEMP_MAX, defaults): (
-                _temperature_number_selector()
+                _temperature_number_selector(temperature_unit)
             ),
             _optional_number(CONF_COMFORT_RH_MIN, defaults): (
                 _humidity_number_selector()
@@ -292,7 +335,7 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
 def _optional_number(key: str, defaults: Mapping[str, Any]) -> vol.Optional:
     """Return an optional number marker, prefilled only when configured."""
 
-    if key in defaults:
+    if key in defaults and defaults[key] is not None:
         return vol.Optional(key, default=defaults[key])
     return vol.Optional(key)
 
@@ -309,14 +352,14 @@ def _entity_selector(
     )
 
 
-def _temperature_number_selector() -> selector.NumberSelector:
+def _temperature_number_selector(temperature_unit: str) -> selector.NumberSelector:
     return selector.NumberSelector(
         selector.NumberSelectorConfig(
-            min=-30,
-            max=50,
+            min=celsius_to_unit(-30, temperature_unit),
+            max=celsius_to_unit(50, temperature_unit),
             step=0.5,
             mode=selector.NumberSelectorMode.BOX,
-            unit_of_measurement="°C",
+            unit_of_measurement=temperature_unit,
         )
     )
 
@@ -333,7 +376,26 @@ def _humidity_number_selector() -> selector.NumberSelector:
     )
 
 
-def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
+def _display_temperature_defaults(
+    defaults: Mapping[str, Any], temperature_unit: str
+) -> dict[str, Any]:
+    display_defaults = dict(defaults)
+    for key in (CONF_COMFORT_TEMP_MIN, CONF_COMFORT_TEMP_MAX):
+        value = display_defaults.get(key)
+        if value is not None:
+            display_defaults[key] = _display_temperature_value(value, temperature_unit)
+    return display_defaults
+
+
+def _display_temperature_value(value: Any, temperature_unit: str) -> float:
+    return celsius_to_unit(float(value), temperature_unit)
+
+
+def _global_options(
+    user_input: Mapping[str, Any],
+    *,
+    temperature_unit: str = UnitOfTemperature.CELSIUS,
+) -> dict[str, Any]:
     return {
         CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
             user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
@@ -341,15 +403,23 @@ def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
         CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
             user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
         ),
-        CONF_COMFORT_TEMP_MIN: user_input[CONF_COMFORT_TEMP_MIN],
-        CONF_COMFORT_TEMP_MAX: user_input[CONF_COMFORT_TEMP_MAX],
+        CONF_COMFORT_TEMP_MIN: unit_to_celsius(
+            user_input[CONF_COMFORT_TEMP_MIN], temperature_unit
+        ),
+        CONF_COMFORT_TEMP_MAX: unit_to_celsius(
+            user_input[CONF_COMFORT_TEMP_MAX], temperature_unit
+        ),
         CONF_COMFORT_RH_MIN: user_input[CONF_COMFORT_RH_MIN],
         CONF_COMFORT_RH_MAX: user_input[CONF_COMFORT_RH_MAX],
         CONF_PRIORITY: user_input[CONF_PRIORITY],
     }
 
 
-def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
+def _device_options(
+    user_input: Mapping[str, Any],
+    *,
+    temperature_unit: str = UnitOfTemperature.CELSIUS,
+) -> dict[str, Any]:
     options = {
         CONF_INDOOR_TEMP_ENTITIES: _entity_ids(
             user_input.get(CONF_INDOOR_TEMP_ENTITIES)
@@ -377,6 +447,8 @@ def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     ):
         value = user_input.get(key)
         if value not in (None, ""):
+            if key in (CONF_COMFORT_TEMP_MIN, CONF_COMFORT_TEMP_MAX):
+                value = unit_to_celsius(value, temperature_unit)
             options[key] = value
 
     return options
