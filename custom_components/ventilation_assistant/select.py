@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
@@ -41,7 +41,6 @@ class VentilationPrioritySelect(SelectEntity):
 
     _attr_entity_category = EntityCategory.CONFIG
     _attr_has_entity_name = True
-    _attr_options: ClassVar[list[str]] = [priority.value for priority in Priority]
     _attr_translation_key = "priority"
 
     def __init__(self, entry: ConfigEntry, coordinator: VentilationCoordinator) -> None:
@@ -49,6 +48,7 @@ class VentilationPrioritySelect(SelectEntity):
 
         self._entry = entry
         self.coordinator = coordinator
+        self._attr_options = [priority.value for priority in Priority]
         self._attr_unique_id = f"{coordinator.device_id}_priority"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.device_id)},

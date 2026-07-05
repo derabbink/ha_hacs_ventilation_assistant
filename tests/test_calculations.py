@@ -17,6 +17,7 @@ for module_name in ("const", "calculations"):
     spec = importlib.util.spec_from_file_location(
         f"{PACKAGE}.{module_name}", ROOT / f"{module_name}.py"
     )
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[f"{PACKAGE}.{module_name}"] = module
     assert spec.loader is not None
