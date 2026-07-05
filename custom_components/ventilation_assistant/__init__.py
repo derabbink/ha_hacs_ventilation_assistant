@@ -330,18 +330,20 @@ class VentilationCoordinator:
                 CONF_INDOOR_HUMIDITY_ENTITIES,
                 CONF_DOOR_WINDOW_ENTITIES,
             )
-            for entity_id in options.get(key, [])
+            for entity_id in _entity_ids(options.get(key))
         } | self._outdoor_input_entity_ids()
 
     def _outdoor_input_entity_ids(self) -> set[str]:
         """Return outdoor inputs, including global fallback entities."""
 
         options = self.config.options
-        entity_ids = set(options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])) | set(
-            options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+        outdoor_temp_entities = _entity_ids(options.get(CONF_OUTDOOR_TEMP_ENTITIES))
+        outdoor_rh_entities = _entity_ids(
+            options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
         )
-        uses_global_temp = not options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])
-        uses_global_rh = not options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+        entity_ids = set(outdoor_temp_entities) | set(outdoor_rh_entities)
+        uses_global_temp = not outdoor_temp_entities
+        uses_global_rh = not outdoor_rh_entities
 
         if uses_global_temp:
             entity_ids.add(GLOBAL_OUTDOOR_TEMP_ENTITY_ID)
@@ -486,7 +488,7 @@ class VentilationCoordinator:
 
     def _numeric_states(self, key: str, expected_unit: str) -> list[float]:
         values: list[float] = []
-        for entity_id in self.config.options.get(key, []):
+        for entity_id in _entity_ids(self.config.options.get(key)):
             value = self._numeric_state(entity_id, expected_unit)
             if value is None:
                 continue
@@ -507,14 +509,14 @@ class VentilationCoordinator:
         return value
 
     def _outdoor_temp(self) -> float | None:
-        if self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES, []):
+        if _entity_ids(self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES)):
             return average(
                 self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature")
             )
         return self._numeric_state(GLOBAL_OUTDOOR_TEMP_ENTITY_ID, "temperature")
 
     def _outdoor_rh(self) -> float | None:
-        if self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []):
+        if _entity_ids(self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)):
             return average(
                 self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
             )
@@ -524,8 +526,10 @@ class VentilationCoordinator:
         self, outdoor_temp: float | None, outdoor_rh: float | None
     ) -> float | None:
         if (
-            not self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])
-            and not self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+            not _entity_ids(self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES))
+            and not _entity_ids(
+                self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
+            )
         ):
             return self._numeric_state(
                 GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID, "absolute_humidity"
@@ -533,7 +537,7 @@ class VentilationCoordinator:
         return absolute_humidity(outdoor_temp, outdoor_rh)
 
     def _open_counts(self) -> tuple[bool | None, int | None, int | None]:
-        entity_ids = self.config.options.get(CONF_DOOR_WINDOW_ENTITIES, [])
+        entity_ids = _entity_ids(self.config.options.get(CONF_DOOR_WINDOW_ENTITIES))
         if not entity_ids:
             return None, None, None
 
@@ -566,7 +570,7 @@ class GlobalOutdoorCoordinator(VentilationCoordinator):
                 CONF_OUTDOOR_TEMP_ENTITIES,
                 CONF_OUTDOOR_HUMIDITY_ENTITIES,
             )
-            for entity_id in options.get(key, [])
+            for entity_id in _entity_ids(options.get(key))
         }
 
     def snapshot(self) -> VentilationSnapshot:
@@ -612,6 +616,16 @@ def _temperature_to_celsius(value: float, unit: str | None) -> float:
     if unit == UnitOfTemperature.FAHRENHEIT:
         return round((value - 32) * 5 / 9, 2)
     return value
+
+
+def _entity_ids(value: Any) -> list[str]:
+    """Return selector entity ids as a list."""
+
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    return list(value)
 
 
 def default_global_options() -> dict[str, Any]:

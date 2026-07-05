@@ -247,7 +247,18 @@ class VentilationSensor(SensorEntity):
         self.async_write_ha_state()
 
     @property
+    def available(self) -> bool:
+        """Return whether the current calculated value is available."""
+
+        return self._native_value() is not None
+
+    @property
     def native_value(self) -> Any:
+        """Return the current calculated value."""
+
+        return self._native_value()
+
+    def _native_value(self) -> Any:
         """Return the current calculated value."""
 
         return getattr(self.coordinator.snapshot(), self.entity_description.value_key)

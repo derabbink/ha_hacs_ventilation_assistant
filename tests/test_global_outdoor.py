@@ -369,6 +369,173 @@ class GlobalOutdoorTests(unittest.TestCase):
             },
         )
 
+    def test_device_snapshot_accepts_scalar_entity_options(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.indoor_temp": _State("22", "°C"),
+                    "sensor.indoor_humidity": _State("48", "%"),
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("10", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("70", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "6.59", "g/m³"
+                    ),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="kitchen",
+                name="Kitchen",
+                options={
+                    const.CONF_INDOOR_TEMP_ENTITIES: "sensor.indoor_temp",
+                    const.CONF_INDOOR_HUMIDITY_ENTITIES: "sensor.indoor_humidity",
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: None,
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: None,
+                },
+            ),
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertEqual(snapshot.indoor_temp, 22.0)
+        self.assertEqual(snapshot.indoor_rh, 48.0)
+        self.assertEqual(snapshot.outdoor_temp, 10.0)
+        self.assertEqual(snapshot.outdoor_rh, 70.0)
+        self.assertEqual(snapshot.outdoor_absolute_humidity, 6.59)
+        self.assertIn("sensor.indoor_temp", coordinator.input_entity_ids)
+        self.assertIn("sensor.indoor_humidity", coordinator.input_entity_ids)
+
+    def test_device_snapshot_has_no_indoor_values_without_indoor_sources(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("10", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("70", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "6.59", "g/m³"
+                    ),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="kitchen",
+                name="Kitchen",
+                options={
+                    const.CONF_INDOOR_TEMP_ENTITIES: [],
+                    const.CONF_INDOOR_HUMIDITY_ENTITIES: [],
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: [],
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
+                },
+            ),
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertIsNone(snapshot.indoor_temp)
+        self.assertIsNone(snapshot.indoor_rh)
+        self.assertIsNone(snapshot.indoor_absolute_humidity)
+        self.assertIsNone(snapshot.indoor_projected_absolute_humidity)
+        self.assertIsNone(snapshot.indoor_projected_rh)
+        self.assertIsNone(snapshot.indoor_projected_rh_difference)
+        self.assertIsNone(snapshot.indoor_outdoor_temp_difference)
+        self.assertIsNone(snapshot.temperature_advice)
+        self.assertIsNone(snapshot.humidity_advice)
+        self.assertIsNone(snapshot.advice)
+
+    def test_indoor_sensor_entities_are_available_when_sources_have_values(
+        self,
+    ) -> None:
+        integration, sensor = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.indoor_temp": _State("22", "°C"),
+                    "sensor.indoor_humidity": _State("48", "%"),
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("10", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("70", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "6.59", "g/m³"
+                    ),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="kitchen",
+                name="Kitchen",
+                options={
+                    const.CONF_INDOOR_TEMP_ENTITIES: ["sensor.indoor_temp"],
+                    const.CONF_INDOOR_HUMIDITY_ENTITIES: ["sensor.indoor_humidity"],
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: [],
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
+                },
+            ),
+        )
+        entities = {
+            description.key: sensor.VentilationSensor(coordinator, description)
+            for description in sensor.SENSOR_DESCRIPTIONS
+            if description.key in ("indoor_temperature", "indoor_humidity")
+        }
+
+        self.assertTrue(entities["indoor_temperature"].available)
+        self.assertEqual(entities["indoor_temperature"].native_value, 22.0)
+        self.assertTrue(entities["indoor_humidity"].available)
+        self.assertEqual(entities["indoor_humidity"].native_value, 48.0)
+
+    def test_indoor_sensor_entities_are_unavailable_without_sources(self) -> None:
+        integration, sensor = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("10", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("70", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "6.59", "g/m³"
+                    ),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="kitchen",
+                name="Kitchen",
+                options={
+                    const.CONF_INDOOR_TEMP_ENTITIES: [],
+                    const.CONF_INDOOR_HUMIDITY_ENTITIES: [],
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: [],
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
+                },
+            ),
+        )
+        entities = {
+            description.key: sensor.VentilationSensor(coordinator, description)
+            for description in sensor.SENSOR_DESCRIPTIONS
+            if description.key in ("indoor_temperature", "indoor_humidity")
+        }
+
+        self.assertFalse(entities["indoor_temperature"].available)
+        self.assertIsNone(entities["indoor_temperature"].native_value)
+        self.assertFalse(entities["indoor_humidity"].available)
+        self.assertIsNone(entities["indoor_humidity"].native_value)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -335,9 +335,11 @@ def _entity_selector(
 
 def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
+        ),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
         ),
         CONF_COMFORT_TEMP_MIN: user_input[CONF_COMFORT_TEMP_MIN],
         CONF_COMFORT_TEMP_MAX: user_input[CONF_COMFORT_TEMP_MAX],
@@ -349,15 +351,21 @@ def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
 
 def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     options = {
-        CONF_INDOOR_TEMP_ENTITIES: user_input.get(CONF_INDOOR_TEMP_ENTITIES, []),
-        CONF_INDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_INDOOR_HUMIDITY_ENTITIES, []
+        CONF_INDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_INDOOR_TEMP_ENTITIES)
         ),
-        CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        CONF_INDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_INDOOR_HUMIDITY_ENTITIES)
         ),
-        CONF_DOOR_WINDOW_ENTITIES: user_input.get(CONF_DOOR_WINDOW_ENTITIES, []),
+        CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
+        ),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
+        ),
+        CONF_DOOR_WINDOW_ENTITIES: _entity_ids(
+            user_input.get(CONF_DOOR_WINDOW_ENTITIES)
+        ),
     }
 
     for key in (
@@ -372,3 +380,13 @@ def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
             options[key] = value
 
     return options
+
+
+def _entity_ids(value: Any) -> list[str]:
+    """Return selector entity ids as a list."""
+
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    return list(value)
