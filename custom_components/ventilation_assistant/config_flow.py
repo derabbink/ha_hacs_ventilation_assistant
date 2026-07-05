@@ -256,18 +256,18 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 CONF_DOOR_WINDOW_ENTITIES,
                 default=defaults.get(CONF_DOOR_WINDOW_ENTITIES, []),
             ): _entity_selector("binary_sensor", ["door", "opening", "window"]),
-            vol.Optional(
-                CONF_COMFORT_TEMP_MIN, default=defaults.get(CONF_COMFORT_TEMP_MIN)
-            ): _temperature_number_selector(),
-            vol.Optional(
-                CONF_COMFORT_TEMP_MAX, default=defaults.get(CONF_COMFORT_TEMP_MAX)
-            ): _temperature_number_selector(),
-            vol.Optional(
-                CONF_COMFORT_RH_MIN, default=defaults.get(CONF_COMFORT_RH_MIN)
-            ): _humidity_number_selector(),
-            vol.Optional(
-                CONF_COMFORT_RH_MAX, default=defaults.get(CONF_COMFORT_RH_MAX)
-            ): _humidity_number_selector(),
+            _optional_number(CONF_COMFORT_TEMP_MIN, defaults): (
+                _temperature_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_TEMP_MAX, defaults): (
+                _temperature_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_RH_MIN, defaults): (
+                _humidity_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_RH_MAX, defaults): (
+                _humidity_number_selector()
+            ),
             vol.Optional(
                 CONF_PRIORITY, default=defaults.get(CONF_PRIORITY, "")
             ): selector.SelectSelector(
@@ -287,6 +287,14 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
         }
     )
     return vol.Schema(schema)
+
+
+def _optional_number(key: str, defaults: Mapping[str, Any]) -> vol.Optional:
+    """Return an optional number marker, prefilled only when configured."""
+
+    if key in defaults:
+        return vol.Optional(key, default=defaults[key])
+    return vol.Optional(key)
 
 
 def _entity_selector(

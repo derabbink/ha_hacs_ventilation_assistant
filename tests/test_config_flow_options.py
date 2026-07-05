@@ -46,6 +46,13 @@ def _install_homeassistant_stubs() -> None:
     core.__dict__["callback"] = lambda func: func
     sys.modules["homeassistant.core"] = core
 
+    class _Marker(str):
+        def __new__(cls, key: str, kind: str, **kwargs: Any) -> _Marker:
+            marker = str.__new__(cls, key)
+            marker.kind = kind
+            marker.kwargs = kwargs
+            return marker
+
     helpers = types.ModuleType("homeassistant.helpers")
     selector = types.ModuleType("homeassistant.helpers.selector")
 
@@ -80,8 +87,8 @@ def _install_homeassistant_stubs() -> None:
     voluptuous.__dict__.update(
         {
             "Any": lambda *args: args,
-            "Optional": lambda key, **kwargs: key,
-            "Required": lambda key, **kwargs: key,
+            "Optional": lambda key, **kwargs: _Marker(key, "optional", **kwargs),
+            "Required": lambda key, **kwargs: _Marker(key, "required", **kwargs),
             "Schema": lambda schema: schema,
         }
     )
@@ -172,6 +179,30 @@ class ConfigFlowOptionsTests(unittest.TestCase):
                 "unit_of_measurement": "%",
             },
         )
+
+    def test_device_schema_prefills_only_configured_comfort_overrides(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+
+        empty_schema = config_flow._device_schema()
+        empty_temp_min = next(
+            field
+            for field in empty_schema
+            if field == const.CONF_COMFORT_TEMP_MIN
+        )
+        self.assertNotIn("default", empty_temp_min.kwargs)
+
+        configured_schema = config_flow._device_schema(
+            {
+                const.CONF_COMFORT_TEMP_MIN: 20.5,
+            }
+        )
+        configured_temp_min = next(
+            field
+            for field in configured_schema
+            if field == const.CONF_COMFORT_TEMP_MIN
+        )
+        self.assertEqual(configured_temp_min.kwargs["default"], 20.5)
 
 
 if __name__ == "__main__":
