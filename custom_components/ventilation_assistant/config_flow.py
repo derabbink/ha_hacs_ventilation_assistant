@@ -202,51 +202,19 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             vol.Required(
                 CONF_COMFORT_TEMP_MIN,
                 default=defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=-30,
-                    max=50,
-                    step=0.5,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="°C",
-                )
-            ),
+            ): _temperature_number_selector(),
             vol.Required(
                 CONF_COMFORT_TEMP_MAX,
                 default=defaults.get(CONF_COMFORT_TEMP_MAX, DEFAULT_COMFORT_TEMP_MAX),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=-30,
-                    max=50,
-                    step=0.5,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="°C",
-                )
-            ),
+            ): _temperature_number_selector(),
             vol.Required(
                 CONF_COMFORT_RH_MIN,
                 default=defaults.get(CONF_COMFORT_RH_MIN, DEFAULT_COMFORT_RH_MIN),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0,
-                    max=100,
-                    step=1,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="%",
-                )
-            ),
+            ): _humidity_number_selector(),
             vol.Required(
                 CONF_COMFORT_RH_MAX,
                 default=defaults.get(CONF_COMFORT_RH_MAX, DEFAULT_COMFORT_RH_MAX),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0,
-                    max=100,
-                    step=1,
-                    mode=selector.NumberSelectorMode.BOX,
-                    unit_of_measurement="%",
-                )
-            ),
+            ): _humidity_number_selector(),
             vol.Required(
                 CONF_PRIORITY,
                 default=defaults.get(CONF_PRIORITY, Priority.TEMPERATURE.value),
@@ -288,18 +256,18 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 CONF_DOOR_WINDOW_ENTITIES,
                 default=defaults.get(CONF_DOOR_WINDOW_ENTITIES, []),
             ): _entity_selector("binary_sensor", ["door", "opening", "window"]),
-            vol.Optional(
-                CONF_COMFORT_TEMP_MIN, default=defaults.get(CONF_COMFORT_TEMP_MIN)
-            ): vol.Any(None, float),
-            vol.Optional(
-                CONF_COMFORT_TEMP_MAX, default=defaults.get(CONF_COMFORT_TEMP_MAX)
-            ): vol.Any(None, float),
-            vol.Optional(
-                CONF_COMFORT_RH_MIN, default=defaults.get(CONF_COMFORT_RH_MIN)
-            ): vol.Any(None, float),
-            vol.Optional(
-                CONF_COMFORT_RH_MAX, default=defaults.get(CONF_COMFORT_RH_MAX)
-            ): vol.Any(None, float),
+            _optional_number(CONF_COMFORT_TEMP_MIN, defaults): (
+                _temperature_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_TEMP_MAX, defaults): (
+                _temperature_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_RH_MIN, defaults): (
+                _humidity_number_selector()
+            ),
+            _optional_number(CONF_COMFORT_RH_MAX, defaults): (
+                _humidity_number_selector()
+            ),
             vol.Optional(
                 CONF_PRIORITY, default=defaults.get(CONF_PRIORITY, "")
             ): selector.SelectSelector(
@@ -321,6 +289,14 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
     return vol.Schema(schema)
 
 
+def _optional_number(key: str, defaults: Mapping[str, Any]) -> vol.Optional:
+    """Return an optional number marker, prefilled only when configured."""
+
+    if key in defaults:
+        return vol.Optional(key, default=defaults[key])
+    return vol.Optional(key)
+
+
 def _entity_selector(
     domain: str, device_class: str | list[str]
 ) -> selector.EntitySelector:
@@ -333,11 +309,37 @@ def _entity_selector(
     )
 
 
+def _temperature_number_selector() -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=-30,
+            max=50,
+            step=0.5,
+            mode=selector.NumberSelectorMode.BOX,
+            unit_of_measurement="°C",
+        )
+    )
+
+
+def _humidity_number_selector() -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0,
+            max=100,
+            step=1,
+            mode=selector.NumberSelectorMode.BOX,
+            unit_of_measurement="%",
+        )
+    )
+
+
 def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
+        ),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
         ),
         CONF_COMFORT_TEMP_MIN: user_input[CONF_COMFORT_TEMP_MIN],
         CONF_COMFORT_TEMP_MAX: user_input[CONF_COMFORT_TEMP_MAX],
@@ -349,15 +351,21 @@ def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
 
 def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     options = {
-        CONF_INDOOR_TEMP_ENTITIES: user_input.get(CONF_INDOOR_TEMP_ENTITIES, []),
-        CONF_INDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_INDOOR_HUMIDITY_ENTITIES, []
+        CONF_INDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_INDOOR_TEMP_ENTITIES)
         ),
-        CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
-        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
-            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        CONF_INDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_INDOOR_HUMIDITY_ENTITIES)
         ),
-        CONF_DOOR_WINDOW_ENTITIES: user_input.get(CONF_DOOR_WINDOW_ENTITIES, []),
+        CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
+        ),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
+        ),
+        CONF_DOOR_WINDOW_ENTITIES: _entity_ids(
+            user_input.get(CONF_DOOR_WINDOW_ENTITIES)
+        ),
     }
 
     for key in (
@@ -372,3 +380,13 @@ def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
             options[key] = value
 
     return options
+
+
+def _entity_ids(value: Any) -> list[str]:
+    """Return selector entity ids as a list."""
+
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    return list(value)

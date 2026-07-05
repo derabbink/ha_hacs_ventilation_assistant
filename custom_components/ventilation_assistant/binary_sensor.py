@@ -66,6 +66,12 @@ class AnyDoorWindowOpenBinarySensor(BinarySensorEntity):
         self.async_write_ha_state()
 
     @property
+    def available(self) -> bool:
+        """Return whether the current contact state is available."""
+
+        return self.coordinator.snapshot().any_open is not None
+
+    @property
     def is_on(self) -> bool | None:
         """Return whether any configured contact is open."""
 
