@@ -51,7 +51,10 @@ from .const import (
     DEFAULT_COMFORT_TEMP_MAX,
     DEFAULT_COMFORT_TEMP_MIN,
     DOMAIN,
+    GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID,
     GLOBAL_OUTDOOR_DEVICE_ID,
+    GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+    GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
     PLATFORMS,
     Priority,
 )
@@ -292,6 +295,16 @@ class VentilationCoordinator:
     async def async_setup(self) -> None:
         """Start tracking referenced input entities."""
 
+        self._async_track_inputs()
+
+    @callback
+    def _async_track_inputs(self) -> None:
+        """Track the current set of referenced input entities."""
+
+        if self._remove_state_listener is not None:
+            self._remove_state_listener()
+            self._remove_state_listener = None
+
         entity_ids = sorted(self.input_entity_ids)
         if entity_ids:
             self._remove_state_listener = async_track_state_change_event(
@@ -315,12 +328,29 @@ class VentilationCoordinator:
             for key in (
                 CONF_INDOOR_TEMP_ENTITIES,
                 CONF_INDOOR_HUMIDITY_ENTITIES,
-                CONF_OUTDOOR_TEMP_ENTITIES,
-                CONF_OUTDOOR_HUMIDITY_ENTITIES,
                 CONF_DOOR_WINDOW_ENTITIES,
             )
             for entity_id in options.get(key, [])
-        }
+        } | self._outdoor_input_entity_ids()
+
+    def _outdoor_input_entity_ids(self) -> set[str]:
+        """Return outdoor inputs, including global fallback entities."""
+
+        options = self.config.options
+        entity_ids = set(options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])) | set(
+            options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+        )
+        uses_global_temp = not options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])
+        uses_global_rh = not options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+
+        if uses_global_temp:
+            entity_ids.add(GLOBAL_OUTDOOR_TEMP_ENTITY_ID)
+        if uses_global_rh:
+            entity_ids.add(GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID)
+        if uses_global_temp and uses_global_rh:
+            entity_ids.add(GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID)
+
+        return entity_ids
 
     @callback
     def async_add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
@@ -346,6 +376,7 @@ class VentilationCoordinator:
 
         self.config.options.clear()
         self.config.options.update(options)
+        self._async_track_inputs()
         self._async_notify_listeners()
 
     @callback
@@ -364,15 +395,11 @@ class VentilationCoordinator:
         indoor_rh = average(
             self._numeric_states(CONF_INDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
         )
-        outdoor_temp = average(
-            self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature")
-        )
-        outdoor_rh = average(
-            self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
-        )
+        outdoor_temp = self._outdoor_temp()
+        outdoor_rh = self._outdoor_rh()
 
         indoor_ah = absolute_humidity(indoor_temp, indoor_rh)
-        outdoor_ah = absolute_humidity(outdoor_temp, outdoor_rh)
+        outdoor_ah = self._outdoor_absolute_humidity(outdoor_temp, outdoor_rh)
         projected_ah = (
             outdoor_ah if indoor_temp is not None and outdoor_ah is not None else None
         )
@@ -460,18 +487,50 @@ class VentilationCoordinator:
     def _numeric_states(self, key: str, expected_unit: str) -> list[float]:
         values: list[float] = []
         for entity_id in self.config.options.get(key, []):
-            state = self.hass.states.get(entity_id)
-            if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
-                continue
-            value = _state_float(state.state)
+            value = self._numeric_state(entity_id, expected_unit)
             if value is None:
                 continue
-            if expected_unit == "temperature":
-                value = _temperature_to_celsius(
-                    value, state.attributes.get("unit_of_measurement")
-                )
             values.append(value)
         return values
+
+    def _numeric_state(self, entity_id: str, expected_unit: str) -> float | None:
+        state = self.hass.states.get(entity_id)
+        if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+            return None
+        value = _state_float(state.state)
+        if value is None:
+            return None
+        if expected_unit == "temperature":
+            value = _temperature_to_celsius(
+                value, state.attributes.get("unit_of_measurement")
+            )
+        return value
+
+    def _outdoor_temp(self) -> float | None:
+        if self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES, []):
+            return average(
+                self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature")
+            )
+        return self._numeric_state(GLOBAL_OUTDOOR_TEMP_ENTITY_ID, "temperature")
+
+    def _outdoor_rh(self) -> float | None:
+        if self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []):
+            return average(
+                self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
+            )
+        return self._numeric_state(GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID, PERCENTAGE)
+
+    def _outdoor_absolute_humidity(
+        self, outdoor_temp: float | None, outdoor_rh: float | None
+    ) -> float | None:
+        if (
+            not self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES, [])
+            and not self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, [])
+        ):
+            return self._numeric_state(
+                GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID, "absolute_humidity"
+            )
+        return absolute_humidity(outdoor_temp, outdoor_rh)
 
     def _open_counts(self) -> tuple[bool | None, int | None, int | None]:
         entity_ids = self.config.options.get(CONF_DOOR_WINDOW_ENTITIES, [])
@@ -495,6 +554,20 @@ class VentilationCoordinator:
 
 class GlobalOutdoorCoordinator(VentilationCoordinator):
     """Coordinator for global outdoor weather sensors."""
+
+    @property
+    def input_entity_ids(self) -> set[str]:
+        """Return configured global outdoor source entity ids."""
+
+        options = self.config.options
+        return {
+            entity_id
+            for key in (
+                CONF_OUTDOOR_TEMP_ENTITIES,
+                CONF_OUTDOOR_HUMIDITY_ENTITIES,
+            )
+            for entity_id in options.get(key, [])
+        }
 
     def snapshot(self) -> VentilationSnapshot:
         """Compute the latest global outdoor snapshot."""

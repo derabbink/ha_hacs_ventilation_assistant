@@ -15,6 +15,15 @@ CONF_GLOBAL = "global"
 CONF_DEVICE = "device"
 
 GLOBAL_OUTDOOR_DEVICE_ID = "ventilation_assistant_global"
+GLOBAL_OUTDOOR_TEMP_ENTITY_ID = (
+    "sensor.ventilation_assistant_global_outdoor_temperature"
+)
+GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID = (
+    "sensor.ventilation_assistant_global_outdoor_humidity"
+)
+GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID = (
+    "sensor.ventilation_assistant_global_absolute_outdoor_humidity"
+)
 
 CONF_INDOOR_TEMP_ENTITIES = "indoor_temp_entities"
 CONF_INDOOR_HUMIDITY_ENTITIES = "indoor_humidity_entities"

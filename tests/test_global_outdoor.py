@@ -166,6 +166,15 @@ class GlobalOutdoorTests(unittest.TestCase):
         self.assertEqual(snapshot.outdoor_temp, 15.0)
         self.assertEqual(snapshot.outdoor_rh, 50.0)
         self.assertEqual(
+            coordinator.input_entity_ids,
+            {
+                "sensor.outdoor_temp_a",
+                "sensor.outdoor_temp_b",
+                "sensor.outdoor_humidity_a",
+                "sensor.outdoor_humidity_b",
+            },
+        )
+        self.assertEqual(
             snapshot.outdoor_absolute_humidity,
             integration.absolute_humidity(15.0, 50.0),
         )
@@ -191,6 +200,7 @@ class GlobalOutdoorTests(unittest.TestCase):
         self.assertIsNone(snapshot.outdoor_temp)
         self.assertIsNone(snapshot.outdoor_rh)
         self.assertIsNone(snapshot.outdoor_absolute_humidity)
+        self.assertEqual(coordinator.input_entity_ids, set())
 
     def test_global_outdoor_sensors_use_requested_entity_ids(self) -> None:
         integration, sensor = _load_integration_modules()
@@ -216,6 +226,147 @@ class GlobalOutdoorTests(unittest.TestCase):
                 "sensor.ventilation_assistant_global_outdoor_humidity",
                 "sensor.ventilation_assistant_global_absolute_outdoor_humidity",
             ],
+        )
+
+    def test_device_snapshot_copies_global_outdoor_values_without_overrides(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("14", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("65", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "7.8", "g/m³"
+                    ),
+                    "sensor.indoor_temp": _State("21", "°C"),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="living_room",
+                name="Living room",
+                options={const.CONF_INDOOR_TEMP_ENTITIES: ["sensor.indoor_temp"]},
+            ),
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertEqual(snapshot.outdoor_temp, 14.0)
+        self.assertEqual(snapshot.outdoor_rh, 65.0)
+        self.assertEqual(snapshot.outdoor_absolute_humidity, 7.8)
+        self.assertEqual(snapshot.indoor_projected_absolute_humidity, 7.8)
+        self.assertEqual(
+            coordinator.input_entity_ids,
+            {
+                "sensor.indoor_temp",
+                const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
+                const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+                const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID,
+            },
+        )
+
+    def test_device_snapshot_uses_local_temperature_with_global_humidity(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.outdoor_temp_a": _State("18", "°C"),
+                    "sensor.outdoor_temp_b": _State("20", "°C"),
+                    const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID: _State("60", "%"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "3.2", "g/m³"
+                    ),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="bedroom",
+                name="Bedroom",
+                options={
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: [
+                        "sensor.outdoor_temp_a",
+                        "sensor.outdoor_temp_b",
+                    ]
+                },
+            ),
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertEqual(snapshot.outdoor_temp, 19.0)
+        self.assertEqual(snapshot.outdoor_rh, 60.0)
+        self.assertEqual(
+            snapshot.outdoor_absolute_humidity,
+            integration.absolute_humidity(19.0, 60.0),
+        )
+        self.assertEqual(
+            coordinator.input_entity_ids,
+            {
+                "sensor.outdoor_temp_a",
+                "sensor.outdoor_temp_b",
+                const.GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+            },
+        )
+
+    def test_device_snapshot_uses_global_temperature_with_local_humidity(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID: _State("12", "°C"),
+                    const.GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID: _State(
+                        "3.2", "g/m³"
+                    ),
+                    "sensor.outdoor_humidity_a": _State("45", "%"),
+                    "sensor.outdoor_humidity_b": _State("55", "%"),
+                }
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="office",
+                name="Office",
+                options={
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: [
+                        "sensor.outdoor_humidity_a",
+                        "sensor.outdoor_humidity_b",
+                    ]
+                },
+            ),
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertEqual(snapshot.outdoor_temp, 12.0)
+        self.assertEqual(snapshot.outdoor_rh, 50.0)
+        self.assertEqual(
+            snapshot.outdoor_absolute_humidity,
+            integration.absolute_humidity(12.0, 50.0),
+        )
+        self.assertEqual(
+            coordinator.input_entity_ids,
+            {
+                const.GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
+                "sensor.outdoor_humidity_a",
+                "sensor.outdoor_humidity_b",
+            },
         )
 
 

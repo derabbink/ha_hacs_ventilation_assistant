@@ -19,7 +19,15 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import GlobalOutdoorCoordinator, VentilationCoordinator, coordinators_for_entry
-from .const import CONF_GLOBAL, CONF_KIND, DOMAIN, Advice
+from .const import (
+    CONF_GLOBAL,
+    CONF_KIND,
+    DOMAIN,
+    GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID,
+    GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+    GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
+    Advice,
+)
 
 ABSOLUTE_HUMIDITY_UNIT = "g/m³"
 
@@ -216,7 +224,13 @@ class VentilationSensor(SensorEntity):
             "manufacturer": "Ventilation Assistant",
         }
         if isinstance(coordinator, GlobalOutdoorCoordinator):
-            self.entity_id = f"sensor.ventilation_assistant_{description.key}"
+            self.entity_id = {
+                "global_outdoor_temperature": GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
+                "global_outdoor_humidity": GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+                "global_absolute_outdoor_humidity": (
+                    GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID
+                ),
+            }[description.key]
             self._attr_device_info["translation_key"] = "outdoor"
 
     async def async_added_to_hass(self) -> None:
