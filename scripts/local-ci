@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+python -m compileall custom_components tests
+ruff check .
+ty check
+pytest
+sh scripts/hacs-validate
+sh scripts/hassfest
