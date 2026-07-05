@@ -90,6 +90,15 @@ def _install_homeassistant_stubs() -> None:
     sys.modules["homeassistant.components"] = components
     sys.modules["homeassistant.components.sensor"] = sensor
 
+    binary_sensor = types.ModuleType("homeassistant.components.binary_sensor")
+    binary_sensor.__dict__.update(
+        {
+            "BinarySensorDeviceClass": types.SimpleNamespace(OPENING="opening"),
+            "BinarySensorEntity": type("BinarySensorEntity", (), {}),
+        }
+    )
+    sys.modules["homeassistant.components.binary_sensor"] = binary_sensor
+
 
 def _load_integration_modules() -> tuple[Any, Any]:
     _install_homeassistant_stubs()
@@ -104,6 +113,25 @@ def _load_integration_modules() -> tuple[Any, Any]:
         "Any", importlib.import_module("custom_components.ventilation_assistant.sensor")
     )
     return integration, sensor
+
+
+def _load_binary_sensor_modules() -> tuple[Any, Any, Any]:
+    _install_homeassistant_stubs()
+    for module_name in list(sys.modules):
+        if module_name.startswith("custom_components.ventilation_assistant"):
+            del sys.modules[module_name]
+
+    integration = cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant")
+    )
+    sensor = cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant.sensor")
+    )
+    binary_sensor = cast(
+        "Any",
+        importlib.import_module("custom_components.ventilation_assistant.binary_sensor"),
+    )
+    return integration, sensor, binary_sensor
 
 
 def _const_module() -> Any:
@@ -575,6 +603,36 @@ class GlobalOutdoorTests(unittest.TestCase):
         self.assertIsNone(entities["indoor_temperature"].native_value)
         self.assertFalse(entities["indoor_humidity"].available)
         self.assertIsNone(entities["indoor_humidity"].native_value)
+
+    def test_door_window_entities_are_unavailable_without_sources(self) -> None:
+        integration, sensor, binary_sensor = _load_binary_sensor_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(data={const.DOMAIN: {}}, states=_States({}))
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="kitchen",
+                name="Kitchen",
+                options={
+                    const.CONF_INDOOR_TEMP_ENTITIES: [],
+                    const.CONF_INDOOR_HUMIDITY_ENTITIES: [],
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: [],
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
+                    const.CONF_DOOR_WINDOW_ENTITIES: [],
+                },
+            ),
+        )
+        percentage_entity = next(
+            sensor.VentilationSensor(coordinator, description)
+            for description in sensor.SENSOR_DESCRIPTIONS
+            if description.key == "doors_windows_open_percentage"
+        )
+        any_open_entity = binary_sensor.AnyDoorWindowOpenBinarySensor(coordinator)
+
+        self.assertFalse(percentage_entity.available)
+        self.assertIsNone(percentage_entity.native_value)
+        self.assertFalse(any_open_entity.available)
+        self.assertIsNone(any_open_entity.is_on)
 
 
 if __name__ == "__main__":
