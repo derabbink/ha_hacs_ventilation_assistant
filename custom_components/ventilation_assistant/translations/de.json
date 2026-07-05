@@ -11,6 +11,8 @@
       "global": {
         "title": "Globale Standardwerte",
         "data": {
+          "outdoor_temp_entities": "Außentemperatur-Sensoren",
+          "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
           "comfort_temp_min": "Minimale Komfort-Innentemperatur",
           "comfort_temp_max": "Maximale Komfort-Innentemperatur",
           "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
@@ -134,6 +136,15 @@
       "outdoor_absolute_humidity": {
         "name": "Absolute Luftfeuchtigkeit außen"
       },
+      "global_outdoor_temperature": {
+        "name": "Temperatur"
+      },
+      "global_outdoor_humidity": {
+        "name": "Feuchtigkeit"
+      },
+      "global_absolute_outdoor_humidity": {
+        "name": "Absolute Feuchtigkeit"
+      },
       "doors_windows_open_percentage": {
         "name": "Türen/Fenster offen"
       },
@@ -192,6 +203,11 @@
           "humidity": "Luftfeuchtigkeit"
         }
       }
+    }
+  },
+  "device": {
+    "outdoor": {
+      "name": "Außen"
     }
   }
 }

@@ -191,6 +191,14 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
     return vol.Schema(
         {
+            vol.Optional(
+                CONF_OUTDOOR_TEMP_ENTITIES,
+                default=defaults.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
+            ): _entity_selector("sensor", "temperature"),
+            vol.Optional(
+                CONF_OUTDOOR_HUMIDITY_ENTITIES,
+                default=defaults.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []),
+            ): _entity_selector("sensor", "humidity"),
             vol.Required(
                 CONF_COMFORT_TEMP_MIN,
                 default=defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
@@ -327,6 +335,10 @@ def _entity_selector(
 
 def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     return {
+        CONF_OUTDOOR_TEMP_ENTITIES: user_input.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: user_input.get(
+            CONF_OUTDOOR_HUMIDITY_ENTITIES, []
+        ),
         CONF_COMFORT_TEMP_MIN: user_input[CONF_COMFORT_TEMP_MIN],
         CONF_COMFORT_TEMP_MAX: user_input[CONF_COMFORT_TEMP_MAX],
         CONF_COMFORT_RH_MIN: user_input[CONF_COMFORT_RH_MIN],

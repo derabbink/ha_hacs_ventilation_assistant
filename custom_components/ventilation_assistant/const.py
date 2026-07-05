@@ -14,6 +14,8 @@ CONF_KIND = "kind"
 CONF_GLOBAL = "global"
 CONF_DEVICE = "device"
 
+GLOBAL_OUTDOOR_DEVICE_ID = "ventilation_assistant_global"
+
 CONF_INDOOR_TEMP_ENTITIES = "indoor_temp_entities"
 CONF_INDOOR_HUMIDITY_ENTITIES = "indoor_humidity_entities"
 CONF_OUTDOOR_TEMP_ENTITIES = "outdoor_temp_entities"
