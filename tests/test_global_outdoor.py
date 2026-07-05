@@ -1,47 +1,68 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import importlib
 import sys
 import types
 import unittest
-from typing import Any
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, cast
+
+ROOT = Path(__file__).parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def _install_homeassistant_stubs() -> None:
     homeassistant = types.ModuleType("homeassistant")
-    homeassistant.__version__ = "test"
+    homeassistant.__dict__["__version__"] = "test"
     sys.modules["homeassistant"] = homeassistant
 
     config_entries = types.ModuleType("homeassistant.config_entries")
-    config_entries.ConfigEntry = type("ConfigEntry", (), {})
-    config_entries.ConfigSubentry = type("ConfigSubentry", (), {})
+    config_entries.__dict__.update(
+        {
+            "ConfigEntry": type("ConfigEntry", (), {}),
+            "ConfigSubentry": type("ConfigSubentry", (), {}),
+        }
+    )
     sys.modules["homeassistant.config_entries"] = config_entries
-    homeassistant.config_entries = config_entries
+    homeassistant.__dict__["config_entries"] = config_entries
 
     const = types.ModuleType("homeassistant.const")
-    const.CONF_NAME = "name"
-    const.PERCENTAGE = "%"
-    const.STATE_UNAVAILABLE = "unavailable"
-    const.STATE_UNKNOWN = "unknown"
-    const.UnitOfTemperature = types.SimpleNamespace(CELSIUS="°C", FAHRENHEIT="°F")
+    const.__dict__.update(
+        {
+            "CONF_NAME": "name",
+            "PERCENTAGE": "%",
+            "STATE_UNAVAILABLE": "unavailable",
+            "STATE_UNKNOWN": "unknown",
+            "UnitOfTemperature": types.SimpleNamespace(
+                CELSIUS="°C", FAHRENHEIT="°F"
+            ),
+        }
+    )
     sys.modules["homeassistant.const"] = const
 
     core = types.ModuleType("homeassistant.core")
-    core.HomeAssistant = type("HomeAssistant", (), {})
-    core.callback = lambda func: func
+    core.__dict__.update(
+        {
+            "HomeAssistant": type("HomeAssistant", (), {}),
+            "callback": lambda func: func,
+        }
+    )
     sys.modules["homeassistant.core"] = core
 
     helpers = types.ModuleType("homeassistant.helpers")
     event = types.ModuleType("homeassistant.helpers.event")
-    event.async_track_state_change_event = lambda *args, **kwargs: (lambda: None)
-    typing = types.ModuleType("homeassistant.helpers.typing")
-    typing.StateType = Any
+    event.__dict__["async_track_state_change_event"] = (
+        lambda *args, **kwargs: (lambda: None)
+    )
+    ha_typing = types.ModuleType("homeassistant.helpers.typing")
+    ha_typing.__dict__["StateType"] = Any
     entity_platform = types.ModuleType("homeassistant.helpers.entity_platform")
-    entity_platform.AddConfigEntryEntitiesCallback = Any
+    entity_platform.__dict__["AddConfigEntryEntitiesCallback"] = Any
     sys.modules["homeassistant.helpers"] = helpers
     sys.modules["homeassistant.helpers.event"] = event
-    sys.modules["homeassistant.helpers.typing"] = typing
+    sys.modules["homeassistant.helpers.typing"] = ha_typing
     sys.modules["homeassistant.helpers.entity_platform"] = entity_platform
 
     components = types.ModuleType("homeassistant.components")
@@ -56,25 +77,39 @@ def _install_homeassistant_stubs() -> None:
         state_class: str | None = None
         options: list[str] | None = None
 
-    sensor.SensorDeviceClass = types.SimpleNamespace(
-        TEMPERATURE="temperature", HUMIDITY="humidity", ENUM="enum"
+    sensor.__dict__.update(
+        {
+            "SensorDeviceClass": types.SimpleNamespace(
+                TEMPERATURE="temperature", HUMIDITY="humidity", ENUM="enum"
+            ),
+            "SensorEntity": type("SensorEntity", (), {}),
+            "SensorEntityDescription": SensorEntityDescription,
+            "SensorStateClass": types.SimpleNamespace(MEASUREMENT="measurement"),
+        }
     )
-    sensor.SensorEntity = type("SensorEntity", (), {})
-    sensor.SensorEntityDescription = SensorEntityDescription
-    sensor.SensorStateClass = types.SimpleNamespace(MEASUREMENT="measurement")
     sys.modules["homeassistant.components"] = components
     sys.modules["homeassistant.components.sensor"] = sensor
 
 
-def _load_integration_modules() -> tuple[types.ModuleType, types.ModuleType]:
+def _load_integration_modules() -> tuple[Any, Any]:
     _install_homeassistant_stubs()
     for module_name in list(sys.modules):
         if module_name.startswith("custom_components.ventilation_assistant"):
             del sys.modules[module_name]
 
-    integration = importlib.import_module("custom_components.ventilation_assistant")
-    sensor = importlib.import_module("custom_components.ventilation_assistant.sensor")
+    integration = cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant")
+    )
+    sensor = cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant.sensor")
+    )
     return integration, sensor
+
+
+def _const_module() -> Any:
+    return cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant.const")
+    )
 
 
 class _State:
@@ -96,7 +131,7 @@ class _States:
 class GlobalOutdoorTests(unittest.TestCase):
     def test_global_outdoor_snapshot_averages_configured_sources(self) -> None:
         integration, _ = _load_integration_modules()
-        const = importlib.import_module("custom_components.ventilation_assistant.const")
+        const = _const_module()
 
         hass = types.SimpleNamespace(
             states=_States(
@@ -137,7 +172,7 @@ class GlobalOutdoorTests(unittest.TestCase):
 
     def test_global_outdoor_snapshot_is_unavailable_without_sources(self) -> None:
         integration, _ = _load_integration_modules()
-        const = importlib.import_module("custom_components.ventilation_assistant.const")
+        const = _const_module()
 
         coordinator = integration.GlobalOutdoorCoordinator(
             types.SimpleNamespace(states=_States({})),
@@ -159,7 +194,7 @@ class GlobalOutdoorTests(unittest.TestCase):
 
     def test_global_outdoor_sensors_use_requested_entity_ids(self) -> None:
         integration, sensor = _load_integration_modules()
-        const = importlib.import_module("custom_components.ventilation_assistant.const")
+        const = _const_module()
         coordinator = integration.GlobalOutdoorCoordinator(
             types.SimpleNamespace(states=_States({})),
             integration.VentilationDeviceConfig(
