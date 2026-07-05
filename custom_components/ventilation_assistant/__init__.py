@@ -51,6 +51,7 @@ from .const import (
     DEFAULT_COMFORT_TEMP_MAX,
     DEFAULT_COMFORT_TEMP_MIN,
     DOMAIN,
+    GLOBAL_OUTDOOR_DEVICE_ID,
     PLATFORMS,
     Priority,
 )
@@ -97,12 +98,23 @@ async def async_setup_entry(
     hass.data.setdefault(DOMAIN, {})
 
     if entry.data[CONF_KIND] == CONF_GLOBAL:
-        hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = _global_options_from_entry(entry)
+        global_options = _global_options_from_entry(entry)
+        hass.data[DOMAIN][DATA_GLOBAL_OPTIONS] = global_options
         coordinators = [
-            VentilationCoordinator(
-                hass, VentilationDeviceConfig.from_subentry(subentry)
-            )
-            for subentry in entry.get_subentries_of_type(CONF_DEVICE)
+            GlobalOutdoorCoordinator(
+                hass,
+                VentilationDeviceConfig(
+                    id=GLOBAL_OUTDOOR_DEVICE_ID,
+                    name="Outdoor",
+                    options=global_options,
+                ),
+            ),
+            *[
+                VentilationCoordinator(
+                    hass, VentilationDeviceConfig.from_subentry(subentry)
+                )
+                for subentry in entry.get_subentries_of_type(CONF_DEVICE)
+            ],
         ]
         hass.data[DOMAIN][entry.entry_id] = coordinators
         for coordinator in coordinators:
@@ -163,6 +175,18 @@ def coordinators_for_entry(
     if isinstance(coordinators, list):
         return coordinators
     return [coordinators]
+
+
+def device_coordinators_for_entry(
+    hass: HomeAssistant, entry: VentilationConfigEntry
+) -> list[VentilationCoordinator]:
+    """Return ventilation-area coordinators owned by a config entry."""
+
+    return [
+        coordinator
+        for coordinator in coordinators_for_entry(hass, entry)
+        if not isinstance(coordinator, GlobalOutdoorCoordinator)
+    ]
 
 
 @callback
@@ -469,6 +493,38 @@ class VentilationCoordinator:
         return open_count > 0, open_count, total_count
 
 
+class GlobalOutdoorCoordinator(VentilationCoordinator):
+    """Coordinator for global outdoor weather sensors."""
+
+    def snapshot(self) -> VentilationSnapshot:
+        """Compute the latest global outdoor snapshot."""
+
+        outdoor_temp = average(
+            self._numeric_states(CONF_OUTDOOR_TEMP_ENTITIES, "temperature")
+        )
+        outdoor_rh = average(
+            self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
+        )
+
+        return VentilationSnapshot(
+            indoor_temp=None,
+            indoor_rh=None,
+            indoor_absolute_humidity=None,
+            indoor_projected_absolute_humidity=None,
+            indoor_projected_rh=None,
+            indoor_projected_rh_difference=None,
+            indoor_outdoor_temp_difference=None,
+            outdoor_temp=outdoor_temp,
+            outdoor_rh=outdoor_rh,
+            outdoor_absolute_humidity=absolute_humidity(outdoor_temp, outdoor_rh),
+            any_open=None,
+            open_percentage=None,
+            temperature_advice=None,
+            humidity_advice=None,
+            advice=None,
+        )
+
+
 def _state_float(value: StateType) -> float | None:
     if value is None:
         return None
@@ -489,6 +545,8 @@ def default_global_options() -> dict[str, Any]:
     """Return built-in global defaults."""
 
     return {
+        CONF_OUTDOOR_TEMP_ENTITIES: [],
+        CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
         CONF_COMFORT_TEMP_MIN: DEFAULT_COMFORT_TEMP_MIN,
         CONF_COMFORT_TEMP_MAX: DEFAULT_COMFORT_TEMP_MAX,
         CONF_COMFORT_RH_MIN: DEFAULT_COMFORT_RH_MIN,

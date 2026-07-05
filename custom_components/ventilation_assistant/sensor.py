@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator, coordinators_for_entry
+from . import GlobalOutdoorCoordinator, VentilationCoordinator, coordinators_for_entry
 from .const import CONF_GLOBAL, CONF_KIND, DOMAIN, Advice
 
 ABSOLUTE_HUMIDITY_UNIT = "g/m³"
@@ -138,6 +138,32 @@ SENSOR_DESCRIPTIONS = (
     ),
 )
 
+GLOBAL_OUTDOOR_SENSOR_DESCRIPTIONS = (
+    VentilationSensorEntityDescription(
+        key="global_outdoor_temperature",
+        translation_key="global_outdoor_temperature",
+        value_key="outdoor_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
+        key="global_outdoor_humidity",
+        translation_key="global_outdoor_humidity",
+        value_key="outdoor_rh",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
+        key="global_absolute_outdoor_humidity",
+        translation_key="global_absolute_outdoor_humidity",
+        value_key="outdoor_absolute_humidity",
+        native_unit_of_measurement=ABSOLUTE_HUMIDITY_UNIT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -147,15 +173,21 @@ async def async_setup_entry(
     """Set up Ventilation Assistant sensors."""
 
     for coordinator in coordinators_for_entry(hass, entry):
+        descriptions = (
+            GLOBAL_OUTDOOR_SENSOR_DESCRIPTIONS
+            if isinstance(coordinator, GlobalOutdoorCoordinator)
+            else SENSOR_DESCRIPTIONS
+        )
         kwargs = (
             {"config_subentry_id": coordinator.device_id}
             if entry.data[CONF_KIND] == CONF_GLOBAL
+            and not isinstance(coordinator, GlobalOutdoorCoordinator)
             else {}
         )
         async_add_entities(
             (
                 VentilationSensor(coordinator, description)
-                for description in SENSOR_DESCRIPTIONS
+                for description in descriptions
             ),
             **kwargs,
         )
@@ -183,6 +215,9 @@ class VentilationSensor(SensorEntity):
             "name": coordinator.device_name,
             "manufacturer": "Ventilation Assistant",
         }
+        if isinstance(coordinator, GlobalOutdoorCoordinator):
+            self.entity_id = f"sensor.ventilation_assistant_{description.key}"
+            self._attr_device_info["translation_key"] = "outdoor"
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to coordinator updates."""

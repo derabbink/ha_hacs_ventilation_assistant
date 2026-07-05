@@ -11,6 +11,8 @@
       "global": {
         "title": "Global defaults",
         "data": {
+          "outdoor_temp_entities": "Outdoor temperature sensors",
+          "outdoor_humidity_entities": "Outdoor humidity sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum",
           "comfort_temp_max": "Indoor comfort temperature maximum",
           "comfort_rh_min": "Indoor comfort humidity minimum",
@@ -134,6 +136,15 @@
       "outdoor_absolute_humidity": {
         "name": "Absolute outdoor humidity"
       },
+      "global_outdoor_temperature": {
+        "name": "Temperature"
+      },
+      "global_outdoor_humidity": {
+        "name": "Humidity"
+      },
+      "global_absolute_outdoor_humidity": {
+        "name": "Absolute humidity"
+      },
       "doors_windows_open_percentage": {
         "name": "Doors/windows open"
       },
@@ -192,6 +203,11 @@
           "humidity": "Humidity"
         }
       }
+    }
+  },
+  "device": {
+    "outdoor": {
+      "name": "Outdoor"
     }
   }
 }

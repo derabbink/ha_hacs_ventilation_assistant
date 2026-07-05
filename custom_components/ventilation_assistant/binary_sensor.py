@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VentilationCoordinator, coordinators_for_entry
+from . import VentilationCoordinator, device_coordinators_for_entry
 from .const import CONF_GLOBAL, CONF_KIND, DOMAIN
 
 
@@ -25,7 +25,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ventilation Assistant binary sensors."""
 
-    for coordinator in coordinators_for_entry(hass, entry):
+    for coordinator in device_coordinators_for_entry(hass, entry):
         kwargs = (
             {"config_subentry_id": coordinator.device_id}
             if entry.data[CONF_KIND] == CONF_GLOBAL

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 from . import (
     VentilationCoordinator,
     async_update_device_options,
-    coordinators_for_entry,
+    device_coordinators_for_entry,
 )
 from .const import CONF_GLOBAL, CONF_KIND, CONF_PRIORITY, DOMAIN, Priority
 
@@ -27,7 +27,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ventilation Assistant selects."""
 
-    for coordinator in coordinators_for_entry(hass, entry):
+    for coordinator in device_coordinators_for_entry(hass, entry):
         kwargs = (
             {"config_subentry_id": coordinator.device_id}
             if entry.data[CONF_KIND] == CONF_GLOBAL
