@@ -13,7 +13,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv run --group lint ruff check .
+      - run: uv run --locked --group lint ruff check .
 
   typecheck:
     runs-on: ubuntu-latest
@@ -22,7 +22,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv run --group typecheck ty check
+      - run: uv run --locked --group typecheck ty check
 
   test:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv run --group test pytest
+      - run: uv run --locked --group test pytest
 
   hacs-validate:
     runs-on: ubuntu-latest

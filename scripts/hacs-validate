@@ -1,11 +1,20 @@
 #!/bin/sh
 set -eu
 
+github_token="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+
+if [ -z "$github_token" ]; then
+  echo "GITHUB_TOKEN or GH_TOKEN is required to run HACS validation." >&2
+  exit 1
+fi
+
 docker run --rm \
+  --platform linux/amd64 \
+  -e REPOSITORY="${REPOSITORY:-}" \
   -e GITHUB_WORKSPACE=/github/workspace \
   -e INPUT_CATEGORY=integration \
   -e INPUT_COMMENT=false \
-  -e INPUT_GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}" \
+  -e INPUT_GITHUB_TOKEN="$github_token" \
   -e INPUT_IGNORE="${HACS_IGNORE:-}" \
   -v "$PWD:/github/workspace" \
   ghcr.io/hacs/action:main

@@ -2,5 +2,6 @@
 set -eu
 
 docker run --rm \
-  -v "$PWD:/github/workspace" \
+  --platform linux/amd64 \
+  -v "$PWD/custom_components:/github/workspace/custom_components" \
   ghcr.io/home-assistant/hassfest

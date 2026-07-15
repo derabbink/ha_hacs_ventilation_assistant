@@ -50,31 +50,32 @@ Copy or symlink this repository into Home Assistant, or add it as a HACS custom 
 
 Complete the global defaults form during first setup. After that, use **Add device** to add each ventilation device directly. Use the gear icon on the **Ventilation Assistant** integration entry to change the global defaults later. Use the configure action on a ventilation device subentry to change the input entities for that virtual device.
 
-## Local CI
+## Local testing and verification
 
-Create the local development environment with:
+Install `uv` first if it is not already available:
 
 ```sh
-pipenv install --dev
+python3 -m pip install uv
 ```
 
-Run the Python CI jobs individually with:
+Run the Python checks individually with the same dependency groups used by CI:
 
 ```sh
-pipenv run lint
-pipenv run typecheck
-pipenv run test
+uv run --locked --no-dev python -m compileall custom_components tests
+uv run --locked --group lint ruff check .
+uv run --locked --group typecheck ty check
+uv run --locked --group test pytest
 ```
 
-Run the GitHub Action backed checks with Docker running:
+Run the GitHub Action backed checks locally with Docker running:
 
 ```sh
-pipenv run hacs-validate
-pipenv run hassfest
+sh scripts/hacs-validate
+sh scripts/hassfest
 ```
 
-Run the full local CI sequence with:
+Run the full local verification sequence with:
 
 ```sh
-pipenv run ci
+sh scripts/local-ci.sh
 ```
