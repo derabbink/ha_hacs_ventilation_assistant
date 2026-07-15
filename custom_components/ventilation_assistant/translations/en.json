@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "Ventilation Assistant",
         "description": "Configure global defaults or create a ventilation area.",
         "data": {
           "kind": "Action"
@@ -47,7 +46,6 @@
       "initiate_flow": {
         "user": "Add ventilation area"
       },
-      "title": "Ventilation device",
       "step": {
         "user": {
           "title": "Ventilation area",

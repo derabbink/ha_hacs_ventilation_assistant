@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "Ventilation Assistant",
         "description": "Globale Standardwerte konfigurieren oder ein Lüftungsbereich erstellen.",
         "data": {
           "kind": "Aktion"
@@ -47,7 +46,6 @@
       "initiate_flow": {
         "user": "Lüftungsbereich hinzufügen"
       },
-      "title": "Lüftungsgerät",
       "step": {
         "user": {
           "title": "Lüftungsgerät",
