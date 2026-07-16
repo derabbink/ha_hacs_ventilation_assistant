@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import importlib
 import sys
 import types
@@ -32,6 +33,7 @@ def _install_homeassistant_stubs() -> None:
     const.__dict__.update(
         {
             "CONF_NAME": "name",
+            "EntityCategory": types.SimpleNamespace(CONFIG="config"),
             "PERCENTAGE": "%",
             "STATE_UNAVAILABLE": "unavailable",
             "STATE_UNKNOWN": "unknown",
@@ -67,6 +69,7 @@ def _install_homeassistant_stubs() -> None:
 
     components = types.ModuleType("homeassistant.components")
     sensor = types.ModuleType("homeassistant.components.sensor")
+    number = types.ModuleType("homeassistant.components.number")
 
     @dataclass(frozen=True, kw_only=True)
     class SensorEntityDescription:
@@ -89,6 +92,25 @@ def _install_homeassistant_stubs() -> None:
     )
     sys.modules["homeassistant.components"] = components
     sys.modules["homeassistant.components.sensor"] = sensor
+
+    @dataclass(frozen=True, kw_only=True)
+    class NumberEntityDescription:
+        key: str
+        translation_key: str | None = None
+        native_min_value: float | None = None
+        native_max_value: float | None = None
+        native_step: float | None = None
+        native_unit_of_measurement: str | None = None
+        mode: str | None = None
+
+    number.__dict__.update(
+        {
+            "NumberEntity": type("NumberEntity", (), {}),
+            "NumberEntityDescription": NumberEntityDescription,
+            "NumberMode": types.SimpleNamespace(BOX="box"),
+        }
+    )
+    sys.modules["homeassistant.components.number"] = number
 
     binary_sensor = types.ModuleType("homeassistant.components.binary_sensor")
     binary_sensor.__dict__.update(
@@ -129,7 +151,9 @@ def _load_binary_sensor_modules() -> tuple[Any, Any, Any]:
     )
     binary_sensor = cast(
         "Any",
-        importlib.import_module("custom_components.ventilation_assistant.binary_sensor"),
+        importlib.import_module(
+            "custom_components.ventilation_assistant.binary_sensor"
+        ),
     )
     return integration, sensor, binary_sensor
 
@@ -137,6 +161,12 @@ def _load_binary_sensor_modules() -> tuple[Any, Any, Any]:
 def _const_module() -> Any:
     return cast(
         "Any", importlib.import_module("custom_components.ventilation_assistant.const")
+    )
+
+
+def _number_module() -> Any:
+    return cast(
+        "Any", importlib.import_module("custom_components.ventilation_assistant.number")
     )
 
 
@@ -298,6 +328,87 @@ class GlobalOutdoorTests(unittest.TestCase):
                 "sensor.ventilation_assistant_global_absolute_outdoor_humidity",
             ],
         )
+
+    def test_temperature_number_reports_preferred_temperature_unit(self) -> None:
+        integration, _ = _load_integration_modules()
+        number = _number_module()
+        const = _const_module()
+
+        hass = types.SimpleNamespace(
+            states=_States({}),
+            data={},
+            config=types.SimpleNamespace(
+                units=types.SimpleNamespace(temperature_unit="°F")
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="area",
+                name="Area",
+                options={
+                    const.CONF_COMFORT_TEMP_MIN: 19.0,
+                    const.CONF_COMFORT_TEMP_MAX: 24.0,
+                    const.CONF_COMFORT_RH_MIN: 40.0,
+                    const.CONF_COMFORT_RH_MAX: 60.0,
+                },
+            ),
+        )
+        entity = number.VentilationNumber(
+            types.SimpleNamespace(
+                data={const.CONF_KIND: const.CONF_DEVICE}, options={}
+            ),
+            coordinator,
+            number.NUMBER_DESCRIPTIONS[0],
+        )
+        entity.hass = hass
+
+        self.assertEqual(entity.native_unit_of_measurement, "°F")
+        self.assertEqual(entity.native_min_value, -22.0)
+        self.assertEqual(entity.native_max_value, 122.0)
+        self.assertEqual(entity.native_value, 66.2)
+
+    def test_temperature_number_stores_fahrenheit_changes_as_celsius(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        number = _number_module()
+        const = _const_module()
+
+        updates: list[dict[str, Any]] = []
+        hass = types.SimpleNamespace(
+            states=_States({}),
+            data={},
+            config=types.SimpleNamespace(
+                units=types.SimpleNamespace(temperature_unit="°F")
+            ),
+            config_entries=types.SimpleNamespace(
+                async_update_entry=lambda entry, options: updates.append(options)
+            ),
+        )
+        entry = types.SimpleNamespace(
+            data={const.CONF_KIND: const.CONF_DEVICE},
+            options={const.CONF_COMFORT_TEMP_MIN: 19.0},
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="area",
+                name="Area",
+                options={const.CONF_COMFORT_TEMP_MIN: 19.0},
+            ),
+        )
+        entity = number.VentilationNumber(
+            entry,
+            coordinator,
+            number.NUMBER_DESCRIPTIONS[0],
+        )
+        entity.hass = hass
+
+        asyncio.run(entity.async_set_native_value(68.0))
+
+        self.assertEqual(updates, [{const.CONF_COMFORT_TEMP_MIN: 20.0}])
+        self.assertEqual(coordinator.config.options[const.CONF_COMFORT_TEMP_MIN], 20.0)
 
     def test_device_snapshot_copies_global_outdoor_values_without_overrides(
         self,

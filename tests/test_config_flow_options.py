@@ -39,7 +39,14 @@ def _install_homeassistant_stubs() -> None:
     homeassistant.__dict__["config_entries"] = config_entries
 
     const = types.ModuleType("homeassistant.const")
-    const.__dict__["CONF_NAME"] = "name"
+    const.__dict__.update(
+        {
+            "CONF_NAME": "name",
+            "UnitOfTemperature": types.SimpleNamespace(
+                CELSIUS="°C", FAHRENHEIT="°F"
+            ),
+        }
+    )
     sys.modules["homeassistant.const"] = const
 
     core = types.ModuleType("homeassistant.core")
@@ -128,6 +135,33 @@ class ConfigFlowOptionsTests(unittest.TestCase):
         self.assertEqual(options[const.CONF_OUTDOOR_TEMP_ENTITIES], [])
         self.assertEqual(options[const.CONF_OUTDOOR_HUMIDITY_ENTITIES], [])
 
+    def test_options_store_fahrenheit_comfort_temperatures_as_celsius(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+
+        global_options = config_flow._global_options(
+            {
+                const.CONF_COMFORT_TEMP_MIN: 68.0,
+                const.CONF_COMFORT_TEMP_MAX: 75.2,
+                const.CONF_COMFORT_RH_MIN: 40.0,
+                const.CONF_COMFORT_RH_MAX: 60.0,
+                const.CONF_PRIORITY: const.Priority.TEMPERATURE.value,
+            },
+            temperature_unit="°F",
+        )
+        device_options = config_flow._device_options(
+            {
+                const.CONF_COMFORT_TEMP_MIN: 68.0,
+                const.CONF_COMFORT_TEMP_MAX: 75.2,
+            },
+            temperature_unit="°F",
+        )
+
+        self.assertEqual(global_options[const.CONF_COMFORT_TEMP_MIN], 20.0)
+        self.assertEqual(global_options[const.CONF_COMFORT_TEMP_MAX], 24.0)
+        self.assertEqual(device_options[const.CONF_COMFORT_TEMP_MIN], 20.0)
+        self.assertEqual(device_options[const.CONF_COMFORT_TEMP_MAX], 24.0)
+
     def test_device_options_normalize_scalar_selectors(self) -> None:
         config_flow = _load_config_flow_module()
         const = importlib.import_module("custom_components.ventilation_assistant.const")
@@ -149,7 +183,7 @@ class ConfigFlowOptionsTests(unittest.TestCase):
         const = importlib.import_module("custom_components.ventilation_assistant.const")
         selector = importlib.import_module("homeassistant.helpers.selector")
 
-        schema = config_flow._device_schema()
+        schema = config_flow._device_schema(temperature_unit="°F")
 
         for key in (
             const.CONF_COMFORT_TEMP_MIN,
@@ -162,11 +196,11 @@ class ConfigFlowOptionsTests(unittest.TestCase):
         self.assertEqual(
             schema[const.CONF_COMFORT_TEMP_MIN].config.kwargs,
             {
-                "min": -30,
-                "max": 50,
+                "min": -22.0,
+                "max": 122.0,
                 "step": 0.5,
                 "mode": selector.NumberSelectorMode.BOX,
-                "unit_of_measurement": "°C",
+                "unit_of_measurement": "°F",
             },
         )
         self.assertEqual(
@@ -184,7 +218,7 @@ class ConfigFlowOptionsTests(unittest.TestCase):
         config_flow = _load_config_flow_module()
         const = importlib.import_module("custom_components.ventilation_assistant.const")
 
-        empty_schema = config_flow._device_schema()
+        empty_schema = config_flow._device_schema(temperature_unit="°F")
         empty_temp_min = next(
             field
             for field in empty_schema
@@ -194,15 +228,48 @@ class ConfigFlowOptionsTests(unittest.TestCase):
 
         configured_schema = config_flow._device_schema(
             {
-                const.CONF_COMFORT_TEMP_MIN: 20.5,
-            }
+                const.CONF_COMFORT_TEMP_MIN: 20.0,
+                const.CONF_COMFORT_RH_MIN: 45.0,
+            },
+            temperature_unit="°F",
         )
         configured_temp_min = next(
             field
             for field in configured_schema
             if field == const.CONF_COMFORT_TEMP_MIN
         )
-        self.assertEqual(configured_temp_min.kwargs["default"], 20.5)
+        configured_rh_min = next(
+            field
+            for field in configured_schema
+            if field == const.CONF_COMFORT_RH_MIN
+        )
+        self.assertEqual(configured_temp_min.kwargs["default"], 68.0)
+        self.assertEqual(configured_rh_min.kwargs["default"], 45.0)
+
+    def test_global_schema_displays_stored_temperatures_in_preferred_unit(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+
+        schema = config_flow._global_schema(
+            {
+                const.CONF_COMFORT_TEMP_MIN: 20.0,
+                const.CONF_COMFORT_TEMP_MAX: 24.0,
+            },
+            temperature_unit="°F",
+        )
+        temp_min = next(
+            field
+            for field in schema
+            if field == const.CONF_COMFORT_TEMP_MIN
+        )
+        temp_max = next(
+            field
+            for field in schema
+            if field == const.CONF_COMFORT_TEMP_MAX
+        )
+
+        self.assertEqual(temp_min.kwargs["default"], 68.0)
+        self.assertEqual(temp_max.kwargs["default"], 75.2)
 
 
 if __name__ == "__main__":
