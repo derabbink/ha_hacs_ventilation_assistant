@@ -18,6 +18,8 @@ class ComfortSettings:
     rh_min: float
     rh_max: float
     priority: Priority
+    co2_min: float = 400.0
+    co2_max: float = 2000.0
 
 
 @dataclass(frozen=True)
@@ -141,11 +143,10 @@ def _prioritized_advice(
     temperature_advice: Advice | None,
     humidity_advice: Advice | None,
 ) -> Advice | None:
-    primary, fallback = (
-        (temperature_advice, humidity_advice)
-        if settings.priority == Priority.TEMPERATURE
-        else (humidity_advice, temperature_advice)
-    )
+    if settings.priority in (Priority.TEMPERATURE, Priority.CO2):
+        primary, fallback = temperature_advice, humidity_advice
+    else:
+        primary, fallback = humidity_advice, temperature_advice
 
     return primary if primary is not None else fallback
 

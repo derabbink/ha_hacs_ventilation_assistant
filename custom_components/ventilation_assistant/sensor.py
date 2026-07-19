@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfConcentration, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 
 if TYPE_CHECKING:
@@ -24,6 +24,7 @@ from .const import (
     CONF_KIND,
     DOMAIN,
     GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID,
+    GLOBAL_OUTDOOR_CO2_ENTITY_ID,
     GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
     GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
     Advice,
@@ -54,6 +55,14 @@ SENSOR_DESCRIPTIONS = (
         value_key="indoor_rh",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
+        key="indoor_carbon_dioxide",
+        translation_key="indoor_carbon_dioxide",
+        value_key="indoor_co2",
+        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
@@ -94,6 +103,13 @@ SENSOR_DESCRIPTIONS = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
+        key="projected_indoor_carbon_dioxide_difference",
+        translation_key="projected_indoor_carbon_dioxide_difference",
+        value_key="projected_indoor_co2_difference",
+        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
         key="outdoor_temperature",
         translation_key="outdoor_temperature",
         value_key="outdoor_temp",
@@ -107,6 +123,14 @@ SENSOR_DESCRIPTIONS = (
         value_key="outdoor_rh",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
+        key="outdoor_carbon_dioxide",
+        translation_key="outdoor_carbon_dioxide",
+        value_key="outdoor_co2",
+        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
@@ -138,6 +162,13 @@ SENSOR_DESCRIPTIONS = (
         options=[advice.value for advice in Advice],
     ),
     VentilationSensorEntityDescription(
+        key="carbon_dioxide_advice",
+        translation_key="carbon_dioxide_advice",
+        value_key="carbon_dioxide_advice",
+        device_class=SensorDeviceClass.ENUM,
+        options=[advice.value for advice in Advice],
+    ),
+    VentilationSensorEntityDescription(
         key="advice",
         translation_key="advice",
         value_key="advice",
@@ -161,6 +192,14 @@ GLOBAL_OUTDOOR_SENSOR_DESCRIPTIONS = (
         value_key="outdoor_rh",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    VentilationSensorEntityDescription(
+        key="global_outdoor_carbon_dioxide",
+        translation_key="global_outdoor_carbon_dioxide",
+        value_key="outdoor_co2",
+        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
@@ -227,6 +266,7 @@ class VentilationSensor(SensorEntity):
             self.entity_id = {
                 "global_outdoor_temperature": GLOBAL_OUTDOOR_TEMP_ENTITY_ID,
                 "global_outdoor_humidity": GLOBAL_OUTDOOR_HUMIDITY_ENTITY_ID,
+                "global_outdoor_carbon_dioxide": GLOBAL_OUTDOOR_CO2_ENTITY_ID,
                 "global_absolute_outdoor_humidity": (
                     GLOBAL_OUTDOOR_ABSOLUTE_HUMIDITY_ENTITY_ID
                 ),

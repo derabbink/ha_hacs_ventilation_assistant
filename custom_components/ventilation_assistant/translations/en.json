@@ -12,10 +12,13 @@
         "data": {
           "outdoor_temp_entities": "Outdoor temperature sensors",
           "outdoor_humidity_entities": "Outdoor humidity sensors",
+          "outdoor_co2_entities": "Outdoor carbon dioxide sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum",
           "comfort_temp_max": "Indoor comfort temperature maximum",
           "comfort_rh_min": "Indoor comfort humidity minimum",
           "comfort_rh_max": "Indoor comfort humidity maximum",
+          "comfort_co2_min": "Indoor comfort carbon dioxide minimum",
+          "comfort_co2_max": "Indoor comfort carbon dioxide maximum",
           "priority": "Priority"
         }
       },
@@ -25,19 +28,26 @@
           "name": "Name",
           "indoor_temp_entities": "Indoor temperature sensors",
           "indoor_humidity_entities": "Indoor humidity sensors",
+          "indoor_co2_entities": "Indoor carbon dioxide sensors",
           "outdoor_temp_entities": "Outdoor temperature sensors",
           "outdoor_humidity_entities": "Outdoor humidity sensors",
+          "outdoor_co2_entities": "Outdoor carbon dioxide sensors",
           "door_window_entities": "Door/window sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum override",
           "comfort_temp_max": "Indoor comfort temperature maximum override",
           "comfort_rh_min": "Indoor comfort humidity minimum override",
           "comfort_rh_max": "Indoor comfort humidity maximum override",
+          "comfort_co2_min": "Indoor comfort carbon dioxide minimum override",
+          "comfort_co2_max": "Indoor comfort carbon dioxide maximum override",
           "priority": "Priority override"
         }
       }
     },
     "abort": {
       "already_configured": "This entry already exists."
+    },
+    "error": {
+      "invalid_co2_range": "The carbon dioxide comfort minimum must be less than the maximum."
     }
   },
   "config_subentries": {
@@ -53,13 +63,17 @@
             "name": "Name",
             "indoor_temp_entities": "Indoor temperature sensors",
             "indoor_humidity_entities": "Indoor humidity sensors",
+            "indoor_co2_entities": "Indoor carbon dioxide sensors",
             "outdoor_temp_entities": "Outdoor temperature sensors",
             "outdoor_humidity_entities": "Outdoor humidity sensors",
+            "outdoor_co2_entities": "Outdoor carbon dioxide sensors",
             "door_window_entities": "Door/window sensors",
             "comfort_temp_min": "Indoor comfort temperature minimum override",
             "comfort_temp_max": "Indoor comfort temperature maximum override",
             "comfort_rh_min": "Indoor comfort humidity minimum override",
             "comfort_rh_max": "Indoor comfort humidity maximum override",
+            "comfort_co2_min": "Indoor comfort carbon dioxide minimum override",
+            "comfort_co2_max": "Indoor comfort carbon dioxide maximum override",
             "priority": "Priority override"
           }
         },
@@ -68,19 +82,26 @@
           "data": {
             "indoor_temp_entities": "Indoor temperature sensors",
             "indoor_humidity_entities": "Indoor humidity sensors",
+            "indoor_co2_entities": "Indoor carbon dioxide sensors",
             "outdoor_temp_entities": "Outdoor temperature sensors",
             "outdoor_humidity_entities": "Outdoor humidity sensors",
+            "outdoor_co2_entities": "Outdoor carbon dioxide sensors",
             "door_window_entities": "Door/window sensors",
             "comfort_temp_min": "Indoor comfort temperature minimum override",
             "comfort_temp_max": "Indoor comfort temperature maximum override",
             "comfort_rh_min": "Indoor comfort humidity minimum override",
             "comfort_rh_max": "Indoor comfort humidity maximum override",
+            "comfort_co2_min": "Indoor comfort carbon dioxide minimum override",
+            "comfort_co2_max": "Indoor comfort carbon dioxide maximum override",
             "priority": "Priority override"
           }
         }
       },
       "abort": {
         "already_configured": "This ventilation device already exists."
+      },
+      "error": {
+        "invalid_co2_range": "The carbon dioxide comfort minimum must be less than the maximum."
       }
     }
   },
@@ -90,16 +111,23 @@
         "data": {
           "indoor_temp_entities": "Indoor temperature sensors",
           "indoor_humidity_entities": "Indoor humidity sensors",
+          "indoor_co2_entities": "Indoor carbon dioxide sensors",
           "outdoor_temp_entities": "Outdoor temperature sensors",
           "outdoor_humidity_entities": "Outdoor humidity sensors",
+          "outdoor_co2_entities": "Outdoor carbon dioxide sensors",
           "door_window_entities": "Door/window sensors",
           "comfort_temp_min": "Indoor comfort temperature minimum",
           "comfort_temp_max": "Indoor comfort temperature maximum",
           "comfort_rh_min": "Indoor comfort humidity minimum",
           "comfort_rh_max": "Indoor comfort humidity maximum",
+          "comfort_co2_min": "Indoor comfort carbon dioxide minimum",
+          "comfort_co2_max": "Indoor comfort carbon dioxide maximum",
           "priority": "Priority"
         }
       }
+    },
+    "error": {
+      "invalid_co2_range": "The carbon dioxide comfort minimum must be less than the maximum."
     }
   },
   "entity": {
@@ -109,6 +137,9 @@
       },
       "indoor_humidity": {
         "name": "Indoor humidity"
+      },
+      "indoor_carbon_dioxide": {
+        "name": "Indoor carbon dioxide"
       },
       "indoor_absolute_humidity": {
         "name": "Absolute indoor humidity"
@@ -125,11 +156,17 @@
       "indoor_outdoor_temperature_difference": {
         "name": "Projected indoor temperature difference"
       },
+      "projected_indoor_carbon_dioxide_difference": {
+        "name": "Projected indoor carbon dioxide difference"
+      },
       "outdoor_temperature": {
         "name": "Outdoor temperature"
       },
       "outdoor_humidity": {
         "name": "Outdoor humidity"
+      },
+      "outdoor_carbon_dioxide": {
+        "name": "Outdoor carbon dioxide"
       },
       "outdoor_absolute_humidity": {
         "name": "Absolute outdoor humidity"
@@ -139,6 +176,9 @@
       },
       "global_outdoor_humidity": {
         "name": "Humidity"
+      },
+      "global_outdoor_carbon_dioxide": {
+        "name": "Carbon dioxide"
       },
       "global_absolute_outdoor_humidity": {
         "name": "Absolute humidity"
@@ -157,6 +197,15 @@
       },
       "humidity_advice": {
         "name": "Humidity advice",
+        "state": {
+          "keep_closed": "Keep closed",
+          "open": "Open",
+          "keep_open": "Keep open",
+          "close": "Close"
+        }
+      },
+      "carbon_dioxide_advice": {
+        "name": "Carbon dioxide advice",
         "state": {
           "keep_closed": "Keep closed",
           "open": "Open",
@@ -191,6 +240,12 @@
       },
       "comfort_rh_max": {
         "name": "Indoor comfort humidity maximum"
+      },
+      "comfort_co2_min": {
+        "name": "Indoor comfort carbon dioxide minimum"
+      },
+      "comfort_co2_max": {
+        "name": "Indoor comfort carbon dioxide maximum"
       }
     },
     "select": {
@@ -198,7 +253,8 @@
         "name": "Priority",
         "state": {
           "temperature": "Temperature",
-          "humidity": "Humidity"
+          "humidity": "Humidity",
+          "carbon_dioxide": "Carbon dioxide"
         }
       }
     }

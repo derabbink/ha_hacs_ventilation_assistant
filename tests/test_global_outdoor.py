@@ -35,9 +35,8 @@ def _install_homeassistant_stubs() -> None:
             "PERCENTAGE": "%",
             "STATE_UNAVAILABLE": "unavailable",
             "STATE_UNKNOWN": "unknown",
-            "UnitOfTemperature": types.SimpleNamespace(
-                CELSIUS="°C", FAHRENHEIT="°F"
-            ),
+            "UnitOfTemperature": types.SimpleNamespace(CELSIUS="°C", FAHRENHEIT="°F"),
+            "UnitOfConcentration": types.SimpleNamespace(PARTS_PER_MILLION="ppm"),
         }
     )
     sys.modules["homeassistant.const"] = const
@@ -53,8 +52,8 @@ def _install_homeassistant_stubs() -> None:
 
     helpers = types.ModuleType("homeassistant.helpers")
     event = types.ModuleType("homeassistant.helpers.event")
-    event.__dict__["async_track_state_change_event"] = (
-        lambda *args, **kwargs: (lambda: None)
+    event.__dict__["async_track_state_change_event"] = lambda *args, **kwargs: (
+        lambda: None
     )
     ha_typing = types.ModuleType("homeassistant.helpers.typing")
     ha_typing.__dict__["StateType"] = Any
@@ -80,7 +79,10 @@ def _install_homeassistant_stubs() -> None:
     sensor.__dict__.update(
         {
             "SensorDeviceClass": types.SimpleNamespace(
-                TEMPERATURE="temperature", HUMIDITY="humidity", ENUM="enum"
+                TEMPERATURE="temperature",
+                HUMIDITY="humidity",
+                CO2="carbon_dioxide",
+                ENUM="enum",
             ),
             "SensorEntity": type("SensorEntity", (), {}),
             "SensorEntityDescription": SensorEntityDescription,
@@ -129,7 +131,9 @@ def _load_binary_sensor_modules() -> tuple[Any, Any, Any]:
     )
     binary_sensor = cast(
         "Any",
-        importlib.import_module("custom_components.ventilation_assistant.binary_sensor"),
+        importlib.import_module(
+            "custom_components.ventilation_assistant.binary_sensor"
+        ),
     )
     return integration, sensor, binary_sensor
 
@@ -141,9 +145,7 @@ def _const_module() -> Any:
 
 
 class _State:
-    def __init__(
-        self, state: str, unit_of_measurement: str | None = None
-    ) -> None:
+    def __init__(self, state: str, unit_of_measurement: str | None = None) -> None:
         self.state = state
         self.attributes = {"unit_of_measurement": unit_of_measurement}
 
@@ -173,6 +175,180 @@ def _global_outdoor_coordinator(integration: Any, const: Any, hass: Any) -> Any:
 
 
 class GlobalOutdoorTests(unittest.TestCase):
+    def test_device_outdoor_co2_override_replaces_global_value(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.global_co2": _State("420", "ppm"),
+                    "sensor.local_co2_a": _State("500", "ppm"),
+                    "sensor.local_co2_b": _State("501", "ppm"),
+                }
+            ),
+        )
+        global_coordinator = integration.GlobalOutdoorCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: ["sensor.global_co2"]},
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="office",
+                name="Office",
+                options={
+                    const.CONF_OUTDOOR_CO2_ENTITIES: [
+                        "sensor.local_co2_a",
+                        "sensor.local_co2_b",
+                    ]
+                },
+            ),
+            global_coordinator=global_coordinator,
+        )
+
+        self.assertEqual(coordinator.snapshot().outdoor_co2, 500)
+        self.assertIn("sensor.local_co2_a", coordinator.input_entity_ids)
+
+    def test_bad_device_outdoor_co2_override_does_not_fall_back_global(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.global_co2": _State("420", "ppm"),
+                    "sensor.local_co2": _State("unavailable", "ppm"),
+                }
+            ),
+        )
+        global_coordinator = integration.GlobalOutdoorCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: ["sensor.global_co2"]},
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="office",
+                name="Office",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: ["sensor.local_co2"]},
+            ),
+            global_coordinator=global_coordinator,
+        )
+
+        self.assertIsNone(coordinator.snapshot().outdoor_co2)
+
+    def test_device_co2_snapshot_copies_outdoor_and_calculates_difference(
+        self,
+    ) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(
+            data={const.DOMAIN: {}},
+            states=_States(
+                {
+                    "sensor.outdoor_co2": _State("420", "ppm"),
+                    "sensor.indoor_co2_a": _State("800", "ppm"),
+                    "sensor.indoor_co2_b": _State("unknown", "ppm"),
+                }
+            ),
+        )
+        global_coordinator = integration.GlobalOutdoorCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: ["sensor.outdoor_co2"]},
+            ),
+        )
+        coordinator = integration.VentilationCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id="office",
+                name="Office",
+                options={
+                    const.CONF_INDOOR_CO2_ENTITIES: [
+                        "sensor.indoor_co2_a",
+                        "sensor.indoor_co2_b",
+                    ]
+                },
+            ),
+            global_coordinator=global_coordinator,
+        )
+
+        snapshot = coordinator.snapshot()
+
+        self.assertEqual(snapshot.outdoor_co2, 420)
+        self.assertEqual(snapshot.indoor_co2, 800)
+        self.assertEqual(snapshot.projected_indoor_co2_difference, -380)
+        self.assertIsNone(snapshot.carbon_dioxide_advice)
+
+    def test_global_outdoor_co2_defaults_to_400_without_sources(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        coordinator = integration.GlobalOutdoorCoordinator(
+            types.SimpleNamespace(states=_States({})),
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: []},
+            ),
+        )
+
+        self.assertEqual(coordinator.snapshot().outdoor_co2, 400)
+
+    def test_global_outdoor_co2_averages_usable_sources_to_whole_ppm(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        coordinator = integration.GlobalOutdoorCoordinator(
+            types.SimpleNamespace(
+                states=_States(
+                    {
+                        "sensor.co2_a": _State("501", "ppm"),
+                        "sensor.co2_b": _State("502", "ppm"),
+                        "sensor.co2_bad": _State("unavailable", "ppm"),
+                    }
+                )
+            ),
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={
+                    const.CONF_OUTDOOR_CO2_ENTITIES: [
+                        "sensor.co2_a",
+                        "sensor.co2_b",
+                        "sensor.co2_bad",
+                    ]
+                },
+            ),
+        )
+
+        self.assertEqual(coordinator.snapshot().outdoor_co2, 502)
+
+    def test_global_outdoor_co2_is_unavailable_when_all_sources_are_bad(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        coordinator = integration.GlobalOutdoorCoordinator(
+            types.SimpleNamespace(
+                states=_States({"sensor.co2": _State("unknown", "ppm")})
+            ),
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={const.CONF_OUTDOOR_CO2_ENTITIES: ["sensor.co2"]},
+            ),
+        )
+
+        self.assertIsNone(coordinator.snapshot().outdoor_co2)
+
     def test_global_outdoor_snapshot_averages_configured_sources(self) -> None:
         integration, _ = _load_integration_modules()
         const = _const_module()
@@ -270,8 +446,13 @@ class GlobalOutdoorTests(unittest.TestCase):
         self.assertIsNone(snapshot.outdoor_rh)
         self.assertIsNone(snapshot.outdoor_absolute_humidity)
         self.assertEqual(coordinator.input_entity_ids, set())
-        self.assertTrue(all(entity.native_value is None for entity in entities))
-        self.assertTrue(all(not entity.available for entity in entities))
+        values = {
+            entity.entity_description.key: entity.native_value for entity in entities
+        }
+        self.assertIsNone(values["global_outdoor_temperature"])
+        self.assertIsNone(values["global_outdoor_humidity"])
+        self.assertEqual(values["global_outdoor_carbon_dioxide"], 400)
+        self.assertIsNone(values["global_absolute_outdoor_humidity"])
 
     def test_global_outdoor_sensors_use_requested_entity_ids(self) -> None:
         integration, sensor = _load_integration_modules()
@@ -295,6 +476,7 @@ class GlobalOutdoorTests(unittest.TestCase):
             [
                 "sensor.ventilation_assistant_global_outdoor_temperature",
                 "sensor.ventilation_assistant_global_outdoor_humidity",
+                "sensor.ventilation_assistant_global_outdoor_carbon_dioxide",
                 "sensor.ventilation_assistant_global_absolute_outdoor_humidity",
             ],
         )

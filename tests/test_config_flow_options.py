@@ -127,6 +127,7 @@ class ConfigFlowOptionsTests(unittest.TestCase):
         self.assertEqual(options[const.CONF_INDOOR_HUMIDITY_ENTITIES], [])
         self.assertEqual(options[const.CONF_OUTDOOR_TEMP_ENTITIES], [])
         self.assertEqual(options[const.CONF_OUTDOOR_HUMIDITY_ENTITIES], [])
+        self.assertEqual(options[const.CONF_OUTDOOR_CO2_ENTITIES], [])
 
     def test_device_options_normalize_scalar_selectors(self) -> None:
         config_flow = _load_config_flow_module()
@@ -156,6 +157,8 @@ class ConfigFlowOptionsTests(unittest.TestCase):
             const.CONF_COMFORT_TEMP_MAX,
             const.CONF_COMFORT_RH_MIN,
             const.CONF_COMFORT_RH_MAX,
+            const.CONF_COMFORT_CO2_MIN,
+            const.CONF_COMFORT_CO2_MAX,
         ):
             self.assertIsInstance(schema[key], selector.NumberSelector)
 
@@ -179,6 +182,60 @@ class ConfigFlowOptionsTests(unittest.TestCase):
                 "unit_of_measurement": "%",
             },
         )
+        self.assertEqual(
+            schema[const.CONF_COMFORT_CO2_MIN].config.kwargs,
+            {
+                "min": 1,
+                "max": 10000,
+                "step": 1,
+                "mode": selector.NumberSelectorMode.BOX,
+                "unit_of_measurement": "ppm",
+            },
+        )
+
+    def test_co2_comfort_bounds_require_minimum_below_maximum(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+
+        self.assertTrue(
+            config_flow._co2_bounds_valid(
+                {
+                    const.CONF_COMFORT_CO2_MIN: 400,
+                    const.CONF_COMFORT_CO2_MAX: 2000,
+                }
+            )
+        )
+        self.assertFalse(
+            config_flow._co2_bounds_valid(
+                {
+                    const.CONF_COMFORT_CO2_MIN: 2000,
+                    const.CONF_COMFORT_CO2_MAX: 2000,
+                }
+            )
+        )
+
+    def test_co2_entity_selectors_only_allow_carbon_dioxide_sensors(self) -> None:
+        config_flow = _load_config_flow_module()
+        const = importlib.import_module("custom_components.ventilation_assistant.const")
+
+        global_selector = config_flow._global_schema()[const.CONF_OUTDOOR_CO2_ENTITIES]
+        device_schema = config_flow._device_schema()
+        indoor_device_selector = device_schema[const.CONF_INDOOR_CO2_ENTITIES]
+        outdoor_device_selector = device_schema[const.CONF_OUTDOOR_CO2_ENTITIES]
+
+        for entity_selector in (
+            global_selector,
+            indoor_device_selector,
+            outdoor_device_selector,
+        ):
+            self.assertEqual(
+                entity_selector.config.kwargs,
+                {
+                    "domain": "sensor",
+                    "device_class": "carbon_dioxide",
+                    "multiple": True,
+                },
+            )
 
     def test_device_schema_prefills_only_configured_comfort_overrides(self) -> None:
         config_flow = _load_config_flow_module()
@@ -186,9 +243,7 @@ class ConfigFlowOptionsTests(unittest.TestCase):
 
         empty_schema = config_flow._device_schema()
         empty_temp_min = next(
-            field
-            for field in empty_schema
-            if field == const.CONF_COMFORT_TEMP_MIN
+            field for field in empty_schema if field == const.CONF_COMFORT_TEMP_MIN
         )
         self.assertNotIn("default", empty_temp_min.kwargs)
 
@@ -198,9 +253,7 @@ class ConfigFlowOptionsTests(unittest.TestCase):
             }
         )
         configured_temp_min = next(
-            field
-            for field in configured_schema
-            if field == const.CONF_COMFORT_TEMP_MIN
+            field for field in configured_schema if field == const.CONF_COMFORT_TEMP_MIN
         )
         self.assertEqual(configured_temp_min.kwargs["default"], 20.5)
 

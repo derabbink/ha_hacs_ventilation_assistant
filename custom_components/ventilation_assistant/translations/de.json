@@ -12,10 +12,13 @@
         "data": {
           "outdoor_temp_entities": "Außentemperatur-Sensoren",
           "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+          "outdoor_co2_entities": "Außen CO₂ Sensoren",
           "comfort_temp_min": "Minimale Komfort-Innentemperatur",
           "comfort_temp_max": "Maximale Komfort-Innentemperatur",
           "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
           "comfort_rh_max": "Maximale Komfort-Luftfeuchtigkeit innen",
+          "comfort_co2_min": "Komfort CO₂ Minimum innen",
+          "comfort_co2_max": "Komfort CO₂ Maximum innen",
           "priority": "Priorität"
         }
       },
@@ -25,19 +28,26 @@
           "name": "Name",
           "indoor_temp_entities": "Innentemperatur-Sensoren",
           "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+          "indoor_co2_entities": "Innen CO₂ Sensoren",
           "outdoor_temp_entities": "Außentemperatur-Sensoren",
           "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+          "outdoor_co2_entities": "Außen CO₂ Sensoren",
           "door_window_entities": "Tür-/Fenstersensoren",
           "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
           "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
           "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
           "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+          "comfort_co2_min": "Überschreibung des Komfort CO₂ Minimums innen",
+          "comfort_co2_max": "Überschreibung des Komfort CO₂ Maximums innen",
           "priority": "Priorität überschreiben"
         }
       }
     },
     "abort": {
       "already_configured": "Dieser Eintrag ist bereits vorhanden."
+    },
+    "error": {
+      "invalid_co2_range": "Das Komfort CO₂ Minimum muss kleiner als das Maximum sein."
     }
   },
   "config_subentries": {
@@ -53,13 +63,17 @@
             "name": "Name",
             "indoor_temp_entities": "Innentemperatur-Sensoren",
             "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+            "indoor_co2_entities": "Innen CO₂ Sensoren",
             "outdoor_temp_entities": "Außentemperatur-Sensoren",
             "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+            "outdoor_co2_entities": "Außen CO₂ Sensoren",
             "door_window_entities": "Tür-/Fenstersensoren",
             "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
             "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
             "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
             "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+            "comfort_co2_min": "Überschreibung des Komfort CO₂ Minimums innen",
+            "comfort_co2_max": "Überschreibung des Komfort CO₂ Maximums innen",
             "priority": "Priorität überschreiben"
           }
         },
@@ -68,19 +82,26 @@
           "data": {
             "indoor_temp_entities": "Innentemperatur-Sensoren",
             "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+            "indoor_co2_entities": "Innen CO₂ Sensoren",
             "outdoor_temp_entities": "Außentemperatur-Sensoren",
             "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+            "outdoor_co2_entities": "Außen CO₂ Sensoren",
             "door_window_entities": "Tür-/Fenstersensoren",
             "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
             "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
             "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
             "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
+            "comfort_co2_min": "Überschreibung des Komfort CO₂ Minimums innen",
+            "comfort_co2_max": "Überschreibung des Komfort CO₂ Maximums innen",
             "priority": "Priorität überschreiben"
           }
         }
       },
       "abort": {
         "already_configured": "Dieses Lüftungsgerät ist bereits vorhanden."
+      },
+      "error": {
+        "invalid_co2_range": "Das Komfort CO₂ Minimum muss kleiner als das Maximum sein."
       }
     }
   },
@@ -90,16 +111,23 @@
         "data": {
           "indoor_temp_entities": "Innentemperatur-Sensoren",
           "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
+          "indoor_co2_entities": "Innen CO₂ Sensoren",
           "outdoor_temp_entities": "Außentemperatur-Sensoren",
           "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
+          "outdoor_co2_entities": "Außen CO₂ Sensoren",
           "door_window_entities": "Tür-/Fenstersensoren",
           "comfort_temp_min": "Minimale Komfort-Innentemperatur",
           "comfort_temp_max": "Maximale Komfort-Innentemperatur",
           "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
           "comfort_rh_max": "Maximale Komfort-Luftfeuchtigkeit innen",
+          "comfort_co2_min": "Komfort CO₂ Minimum innen",
+          "comfort_co2_max": "Komfort CO₂ Maximum innen",
           "priority": "Priorität"
         }
       }
+    },
+    "error": {
+      "invalid_co2_range": "Das Komfort CO₂ Minimum muss kleiner als das Maximum sein."
     }
   },
   "entity": {
@@ -109,6 +137,9 @@
       },
       "indoor_humidity": {
         "name": "Innenluftfeuchtigkeit"
+      },
+      "indoor_carbon_dioxide": {
+        "name": "Innen CO₂"
       },
       "indoor_absolute_humidity": {
         "name": "Absolute Luftfeuchtigkeit innen"
@@ -125,11 +156,17 @@
       "indoor_outdoor_temperature_difference": {
         "name": "Prognostizierte Temperaturdifferenz innen"
       },
+      "projected_indoor_carbon_dioxide_difference": {
+        "name": "Prognostizierte CO₂ differenz innen"
+      },
       "outdoor_temperature": {
         "name": "Außentemperatur"
       },
       "outdoor_humidity": {
         "name": "Außenluftfeuchtigkeit"
+      },
+      "outdoor_carbon_dioxide": {
+        "name": "Außen CO₂"
       },
       "outdoor_absolute_humidity": {
         "name": "Absolute Luftfeuchtigkeit außen"
@@ -139,6 +176,9 @@
       },
       "global_outdoor_humidity": {
         "name": "Feuchtigkeit"
+      },
+      "global_outdoor_carbon_dioxide": {
+        "name": "CO₂"
       },
       "global_absolute_outdoor_humidity": {
         "name": "Absolute Feuchtigkeit"
@@ -157,6 +197,15 @@
       },
       "humidity_advice": {
         "name": "Luftfeuchtigkeitsempfehlung",
+        "state": {
+          "keep_closed": "Geschlossen halten",
+          "open": "Öffnen",
+          "keep_open": "Geöffnet lassen",
+          "close": "Schließen"
+        }
+      },
+      "carbon_dioxide_advice": {
+        "name": "CO₂ Empfehlung",
         "state": {
           "keep_closed": "Geschlossen halten",
           "open": "Öffnen",
@@ -191,6 +240,12 @@
       },
       "comfort_rh_max": {
         "name": "Maximale Komfort-Luftfeuchtigkeit innen"
+      },
+      "comfort_co2_min": {
+        "name": "Komfort CO₂ Minimum innen"
+      },
+      "comfort_co2_max": {
+        "name": "Komfort CO₂ Maximum innen"
       }
     },
     "select": {
@@ -198,7 +253,8 @@
         "name": "Priorität",
         "state": {
           "temperature": "Temperatur",
-          "humidity": "Luftfeuchtigkeit"
+          "humidity": "Luftfeuchtigkeit",
+          "carbon_dioxide": "CO₂"
         }
       }
     }
