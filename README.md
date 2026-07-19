@@ -11,7 +11,7 @@ Use the config flow to create:
 - one global defaults entry for the shared comfort temperature, relative-humidity, and carbon-dioxide bands, plus decision priority
 - one or more ventilation device subentries under that entry
 
-`priority` can be `TEMPERATURE`, `HUMIDITY`, or `CO2`. Each device can override any global default, or leave that field empty to inherit the global setting. Until carbon-dioxide advice is implemented, selecting `CO2` keeps that component advice unavailable and resolves overall advice using temperature followed by humidity.
+`priority` can be `TEMPERATURE`, `HUMIDITY`, or `CO2`. Each device can override any global default, or leave that field empty to inherit the global setting. Overall advice uses the selected component first, followed by the configured fallback order when that component is unavailable.
 
 Each ventilation device creates a Home Assistant device containing:
 
@@ -37,7 +37,7 @@ Each ventilation device creates a Home Assistant device containing:
 - Advice:
     - Temperature advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
     - Humidity advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
-    - Carbon dioxide advice (currently unavailable)
+    - Carbon dioxide advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
     - Advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
 
 ## Availability

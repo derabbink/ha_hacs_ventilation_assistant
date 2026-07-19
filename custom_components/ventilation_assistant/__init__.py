@@ -444,6 +444,8 @@ class VentilationCoordinator:
             outdoor_temp=outdoor_temp,
             indoor_rh=indoor_rh,
             projected_rh=projected_rh,
+            indoor_co2=indoor_co2,
+            outdoor_co2=outdoor_co2,
         )
 
         return VentilationSnapshot(
@@ -470,7 +472,11 @@ class VentilationCoordinator:
             humidity_advice=(
                 advices.humidity.value if advices.humidity is not None else None
             ),
-            carbon_dioxide_advice=None,
+            carbon_dioxide_advice=(
+                advices.carbon_dioxide.value
+                if advices.carbon_dioxide is not None
+                else None
+            ),
             advice=advices.overall.value if advices.overall is not None else None,
         )
 

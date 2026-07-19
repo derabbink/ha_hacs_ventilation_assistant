@@ -289,7 +289,7 @@ class GlobalOutdoorTests(unittest.TestCase):
         self.assertEqual(snapshot.outdoor_co2, 420)
         self.assertEqual(snapshot.indoor_co2, 800)
         self.assertEqual(snapshot.projected_indoor_co2_difference, -380)
-        self.assertIsNone(snapshot.carbon_dioxide_advice)
+        self.assertEqual(snapshot.carbon_dioxide_advice, "close")
 
     def test_global_outdoor_co2_defaults_to_400_without_sources(self) -> None:
         integration, _ = _load_integration_modules()
