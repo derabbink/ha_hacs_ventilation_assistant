@@ -58,42 +58,42 @@
       },
       "step": {
         "user": {
-          "title": "Lüftungsgerät",
+          "title": "[%key:component::ventilation_assistant::config::step::device::title%]",
           "data": {
-            "name": "Name",
-            "indoor_temp_entities": "Innentemperatur-Sensoren",
-            "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
-            "indoor_co2_entities": "Innen CO₂ Sensoren",
-            "outdoor_temp_entities": "Außentemperatur-Sensoren",
-            "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
-            "outdoor_co2_entities": "Außen CO₂ Sensoren",
-            "door_window_entities": "Tür-/Fenstersensoren",
-            "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
-            "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
-            "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
-            "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
-            "comfort_co2_min": "Überschreibung des Komfort CO₂ Minimums innen",
-            "comfort_co2_max": "Überschreibung des Komfort CO₂ Maximums innen",
-            "priority": "Priorität überschreiben"
+            "name": "[%key:component::ventilation_assistant::config::step::device::data::name%]",
+            "indoor_temp_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_temp_entities%]",
+            "indoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_humidity_entities%]",
+            "indoor_co2_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_co2_entities%]",
+            "outdoor_temp_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_temp_entities%]",
+            "outdoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_humidity_entities%]",
+            "outdoor_co2_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_co2_entities%]",
+            "door_window_entities": "[%key:component::ventilation_assistant::config::step::device::data::door_window_entities%]",
+            "comfort_temp_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_temp_min%]",
+            "comfort_temp_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_temp_max%]",
+            "comfort_rh_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_rh_min%]",
+            "comfort_rh_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_rh_max%]",
+            "comfort_co2_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_co2_min%]",
+            "comfort_co2_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_co2_max%]",
+            "priority": "[%key:component::ventilation_assistant::config::step::device::data::priority%]"
           }
         },
         "reconfigure": {
           "title": "Lüftungsgerät konfigurieren",
           "data": {
-            "indoor_temp_entities": "Innentemperatur-Sensoren",
-            "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
-            "indoor_co2_entities": "Innen CO₂ Sensoren",
-            "outdoor_temp_entities": "Außentemperatur-Sensoren",
-            "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
-            "outdoor_co2_entities": "Außen CO₂ Sensoren",
-            "door_window_entities": "Tür-/Fenstersensoren",
-            "comfort_temp_min": "Überschreibung der minimalen Komfort-Innentemperatur",
-            "comfort_temp_max": "Überschreibung der maximalen Komfort-Innentemperatur",
-            "comfort_rh_min": "Überschreibung der minimalen Komfort-Luftfeuchtigkeit innen",
-            "comfort_rh_max": "Überschreibung der maximalen Komfort-Luftfeuchtigkeit innen",
-            "comfort_co2_min": "Überschreibung des Komfort CO₂ Minimums innen",
-            "comfort_co2_max": "Überschreibung des Komfort CO₂ Maximums innen",
-            "priority": "Priorität überschreiben"
+            "indoor_temp_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_temp_entities%]",
+            "indoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_humidity_entities%]",
+            "indoor_co2_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_co2_entities%]",
+            "outdoor_temp_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_temp_entities%]",
+            "outdoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_humidity_entities%]",
+            "outdoor_co2_entities": "[%key:component::ventilation_assistant::config::step::device::data::outdoor_co2_entities%]",
+            "door_window_entities": "[%key:component::ventilation_assistant::config::step::device::data::door_window_entities%]",
+            "comfort_temp_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_temp_min%]",
+            "comfort_temp_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_temp_max%]",
+            "comfort_rh_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_rh_min%]",
+            "comfort_rh_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_rh_max%]",
+            "comfort_co2_min": "[%key:component::ventilation_assistant::config::step::device::data::comfort_co2_min%]",
+            "comfort_co2_max": "[%key:component::ventilation_assistant::config::step::device::data::comfort_co2_max%]",
+            "priority": "[%key:component::ventilation_assistant::config::step::device::data::priority%]"
           }
         }
       },
@@ -101,7 +101,7 @@
         "already_configured": "Dieses Lüftungsgerät ist bereits vorhanden."
       },
       "error": {
-        "invalid_co2_range": "Das Komfort CO₂ Minimum muss kleiner als das Maximum sein."
+        "invalid_co2_range": "[%key:component::ventilation_assistant::config::error::invalid_co2_range%]"
       }
     }
   },
@@ -109,25 +109,25 @@
     "step": {
       "init": {
         "data": {
-          "indoor_temp_entities": "Innentemperatur-Sensoren",
-          "indoor_humidity_entities": "Innenluftfeuchtigkeit-Sensoren",
-          "indoor_co2_entities": "Innen CO₂ Sensoren",
-          "outdoor_temp_entities": "Außentemperatur-Sensoren",
-          "outdoor_humidity_entities": "Außenluftfeuchtigkeit-Sensoren",
-          "outdoor_co2_entities": "Außen CO₂ Sensoren",
-          "door_window_entities": "Tür-/Fenstersensoren",
-          "comfort_temp_min": "Minimale Komfort-Innentemperatur",
-          "comfort_temp_max": "Maximale Komfort-Innentemperatur",
-          "comfort_rh_min": "Minimale Komfort-Luftfeuchtigkeit innen",
-          "comfort_rh_max": "Maximale Komfort-Luftfeuchtigkeit innen",
-          "comfort_co2_min": "Komfort CO₂ Minimum innen",
-          "comfort_co2_max": "Komfort CO₂ Maximum innen",
-          "priority": "Priorität"
+          "indoor_temp_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_temp_entities%]",
+          "indoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_humidity_entities%]",
+          "indoor_co2_entities": "[%key:component::ventilation_assistant::config::step::device::data::indoor_co2_entities%]",
+          "outdoor_temp_entities": "[%key:component::ventilation_assistant::config::step::global::data::outdoor_temp_entities%]",
+          "outdoor_humidity_entities": "[%key:component::ventilation_assistant::config::step::global::data::outdoor_humidity_entities%]",
+          "outdoor_co2_entities": "[%key:component::ventilation_assistant::config::step::global::data::outdoor_co2_entities%]",
+          "door_window_entities": "[%key:component::ventilation_assistant::config::step::device::data::door_window_entities%]",
+          "comfort_temp_min": "[%key:component::ventilation_assistant::config::step::global::data::comfort_temp_min%]",
+          "comfort_temp_max": "[%key:component::ventilation_assistant::config::step::global::data::comfort_temp_max%]",
+          "comfort_rh_min": "[%key:component::ventilation_assistant::config::step::global::data::comfort_rh_min%]",
+          "comfort_rh_max": "[%key:component::ventilation_assistant::config::step::global::data::comfort_rh_max%]",
+          "comfort_co2_min": "[%key:component::ventilation_assistant::config::step::global::data::comfort_co2_min%]",
+          "comfort_co2_max": "[%key:component::ventilation_assistant::config::step::global::data::comfort_co2_max%]",
+          "priority": "[%key:component::ventilation_assistant::config::step::global::data::priority%]"
         }
       }
     },
     "error": {
-      "invalid_co2_range": "Das Komfort CO₂ Minimum muss kleiner als das Maximum sein."
+      "invalid_co2_range": "[%key:component::ventilation_assistant::config::error::invalid_co2_range%]"
     }
   },
   "entity": {
@@ -198,28 +198,28 @@
       "humidity_advice": {
         "name": "Luftfeuchtigkeitsempfehlung",
         "state": {
-          "keep_closed": "Geschlossen halten",
-          "open": "Öffnen",
-          "keep_open": "Geöffnet lassen",
-          "close": "Schließen"
+          "keep_closed": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_closed%]",
+          "open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::open%]",
+          "keep_open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_open%]",
+          "close": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::close%]"
         }
       },
       "carbon_dioxide_advice": {
         "name": "CO₂ Empfehlung",
         "state": {
-          "keep_closed": "Geschlossen halten",
-          "open": "Öffnen",
-          "keep_open": "Geöffnet lassen",
-          "close": "Schließen"
+          "keep_closed": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_closed%]",
+          "open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::open%]",
+          "keep_open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_open%]",
+          "close": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::close%]"
         }
       },
       "advice": {
         "name": "Empfehlung",
         "state": {
-          "keep_closed": "Geschlossen halten",
-          "open": "Öffnen",
-          "keep_open": "Geöffnet lassen",
-          "close": "Schließen"
+          "keep_closed": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_closed%]",
+          "open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::open%]",
+          "keep_open": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::keep_open%]",
+          "close": "[%key:component::ventilation_assistant::entity::sensor::temperature_advice::state::close%]"
         }
       }
     },
@@ -230,27 +230,27 @@
     },
     "number": {
       "comfort_temp_min": {
-        "name": "Minimale Komfort-Innentemperatur"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_temp_min%]"
       },
       "comfort_temp_max": {
-        "name": "Maximale Komfort-Innentemperatur"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_temp_max%]"
       },
       "comfort_rh_min": {
-        "name": "Minimale Komfort-Luftfeuchtigkeit innen"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_rh_min%]"
       },
       "comfort_rh_max": {
-        "name": "Maximale Komfort-Luftfeuchtigkeit innen"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_rh_max%]"
       },
       "comfort_co2_min": {
-        "name": "Komfort CO₂ Minimum innen"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_co2_min%]"
       },
       "comfort_co2_max": {
-        "name": "Komfort CO₂ Maximum innen"
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::comfort_co2_max%]"
       }
     },
     "select": {
       "priority": {
-        "name": "Priorität",
+        "name": "[%key:component::ventilation_assistant::config::step::global::data::priority%]",
         "state": {
           "temperature": "Temperatur",
           "humidity": "Luftfeuchtigkeit",
