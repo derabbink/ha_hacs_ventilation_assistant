@@ -175,6 +175,29 @@ def _global_outdoor_coordinator(integration: Any, const: Any, hass: Any) -> Any:
 
 
 class GlobalOutdoorTests(unittest.TestCase):
+    def test_global_coordinator_does_not_subscribe_to_itself(self) -> None:
+        integration, _ = _load_integration_modules()
+        const = _const_module()
+        hass = types.SimpleNamespace(data={const.DOMAIN: {}}, states=_States({}))
+        coordinator = integration.GlobalOutdoorCoordinator(
+            hass,
+            integration.VentilationDeviceConfig(
+                id=const.GLOBAL_OUTDOOR_DEVICE_ID,
+                name="Outdoor",
+                options={
+                    const.CONF_OUTDOOR_TEMP_ENTITIES: ["sensor.temperature"],
+                    const.CONF_OUTDOOR_HUMIDITY_ENTITIES: ["sensor.humidity"],
+                    const.CONF_OUTDOOR_CO2_ENTITIES: [],
+                },
+            ),
+        )
+        hass.data[const.DOMAIN]["entry"] = [coordinator]
+
+        coordinator._async_track_global_fallback()
+
+        self.assertEqual(coordinator._listeners, [])
+        self.assertIsNone(coordinator._remove_global_listener)
+
     def test_device_outdoor_co2_override_replaces_global_value(self) -> None:
         integration, _ = _load_integration_modules()
         const = _const_module()

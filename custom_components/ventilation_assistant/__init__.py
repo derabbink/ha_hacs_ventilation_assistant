@@ -643,6 +643,11 @@ class VentilationCoordinator:
 class GlobalOutdoorCoordinator(VentilationCoordinator):
     """Coordinator for global outdoor weather sensors."""
 
+    def _uses_global_outdoor(self) -> bool:
+        """The global coordinator is the fallback source, never its own consumer."""
+
+        return False
+
     @property
     def input_entity_ids(self) -> set[str]:
         """Return configured global outdoor source entity ids."""

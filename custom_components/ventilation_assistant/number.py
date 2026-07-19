@@ -13,7 +13,6 @@ from homeassistant.components.number import (
 from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
-    UnitOfConcentration,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -95,7 +94,7 @@ NUMBER_DESCRIPTIONS = (
         native_min_value=1,
         native_max_value=10000,
         native_step=1,
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         mode=NumberMode.BOX,
     ),
     VentilationNumberEntityDescription(
@@ -105,7 +104,7 @@ NUMBER_DESCRIPTIONS = (
         native_min_value=1,
         native_max_value=10000,
         native_step=1,
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         mode=NumberMode.BOX,
     ),
 )

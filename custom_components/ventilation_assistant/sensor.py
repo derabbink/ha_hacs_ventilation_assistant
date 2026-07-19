@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfConcentration, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ SENSOR_DESCRIPTIONS = (
         key="indoor_carbon_dioxide",
         translation_key="indoor_carbon_dioxide",
         value_key="indoor_co2",
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -106,7 +106,7 @@ SENSOR_DESCRIPTIONS = (
         key="projected_indoor_carbon_dioxide_difference",
         translation_key="projected_indoor_carbon_dioxide_difference",
         value_key="projected_indoor_co2_difference",
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     VentilationSensorEntityDescription(
@@ -129,7 +129,7 @@ SENSOR_DESCRIPTIONS = (
         key="outdoor_carbon_dioxide",
         translation_key="outdoor_carbon_dioxide",
         value_key="outdoor_co2",
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -198,7 +198,7 @@ GLOBAL_OUTDOOR_SENSOR_DESCRIPTIONS = (
         key="global_outdoor_carbon_dioxide",
         translation_key="global_outdoor_carbon_dioxide",
         value_key="outdoor_co2",
-        native_unit_of_measurement=UnitOfConcentration.PARTS_PER_MILLION,
+        native_unit_of_measurement="ppm",
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
