@@ -32,6 +32,13 @@ def _translation_keys(filename: str) -> set[str]:
 
 
 class TranslationTests(unittest.TestCase):
+    def test_distributable_translations_do_not_contain_references(self) -> None:
+        """Translation references are not resolved for custom integrations."""
+        for language in ("en", "de"):
+            with self.subTest(language=language):
+                translation = (TRANSLATIONS / f"{language}.json").read_text()
+                self.assertNotIn("[%key:", translation)
+
     def test_german_translation_has_same_leaf_keys_as_english(self) -> None:
         self.assertEqual(
             _leaf_paths(_load_translation("en")),
