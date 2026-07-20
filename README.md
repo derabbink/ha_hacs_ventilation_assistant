@@ -8,41 +8,55 @@ The integration is fully configurable from the Home Assistant UI. Configuration 
 
 Use the config flow to create:
 
-- one global defaults entry for the shared comfort temperature band, comfort relative-humidity band, and decision priority
+- one global defaults entry for the shared comfort temperature, relative-humidity, and carbon-dioxide bands, plus decision priority
 - one or more ventilation device subentries under that entry
 
-`priority` can be `TEMPERATURE` or `HUMIDITY`. Each device can override any global default, or leave that field empty to inherit the global setting.
+`priority` can be `TEMPERATURE`, `HUMIDITY`, or `CO2`. Each device can override any global default, or leave that field empty to inherit the global setting. Overall advice uses the selected component first, followed by the configured fallback order when that component is unavailable.
 
 Each ventilation device creates a Home Assistant device containing:
 
-- Indoor temperature average
-- Indoor relative humidity average
-- Indoor absolute humidity
-- Indoor projected absolute humidity
-- Indoor projected relative humidity
-- Indoor projected relative-humidity difference
-- Indoor projected temperature difference
-- Outdoor temperature average
-- Outdoor relative humidity average
-- Outdoor absolute humidity
-- Any doors/windows open
-- Door/window open percentage
-- Temperature advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
-- Humidity advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
-- Advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
+- Temperature:
+    - Indoor temperature average
+    - Indoor projected temperature difference
+    - Outdoor temperature average
+- Humidity:
+    - Indoor relative humidity average
+    - Indoor absolute humidity
+    - Indoor projected absolute humidity
+    - Indoor projected relative humidity
+    - Indoor projected relative-humidity difference
+    - Outdoor relative humidity average
+    - Outdoor absolute humidity
+- Carbon Dioxide:
+    - Indoor carbon dioxide average
+    - Indoor projected carbon dioxide difference
+    - Outdoor carbon dioxide average, using a per-device override when configured and otherwise the global Outdoor value
+- Doors/Windows:
+    - Any doors/windows open
+    - Door/window open percentage
+- Advice:
+    - Temperature advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
+    - Humidity advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
+    - Carbon dioxide advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
+    - Advice: `KEEP_CLOSED`, `OPEN`, `KEEP_OPEN`, or `CLOSE`
 
 ## Availability
 
 Calculated entities return unavailable when their required inputs are missing or unavailable:
 
-- Averages require at least one available source entity.
-- Absolute humidity requires temperature and relative humidity.
-- Projected indoor absolute humidity requires indoor temperature and outdoor absolute humidity.
-- Projected indoor relative humidity requires indoor temperature and projected absolute humidity.
-- Door/window sensors require at least one available contact sensor.
-- Advice requires either available indoor/outdoor temperature values or available
-  indoor/projected relative-humidity values. Without an available contact sensor,
-  advice is limited to `OPEN` or `CLOSE`.
+- General
+    - Averages require at least one available source entity.
+- Carbon Dioxide
+    - Global outdoor carbon dioxide defaults to 400 ppm only when no global outdoor carbon-dioxide sensors are configured. A device with no outdoor CO₂ override inherits that global value. If a configured global or per-device sensor list has no usable values, its result is unavailable.
+    - Carbon-dioxide averages ignore unknown, unavailable, and non-numeric source values and are rounded to whole ppm.
+- Humidity
+    - Absolute humidity requires temperature and relative humidity.
+    - Indoor projected absolute humidity requires indoor temperature and outdoor absolute humidity.
+    - Indoor projected relative humidity requires indoor temperature and projected absolute humidity.
+- Doors/Windows:
+    - Door/window sensors require at least one available contact sensor.
+    - Advice requires either available indoor/outdoor temperature values or available indoor/projected relative-humidity values.
+    - Without an available contact sensor, advice is limited to `OPEN` or `CLOSE`.
 
 ## HACS installation during development
 

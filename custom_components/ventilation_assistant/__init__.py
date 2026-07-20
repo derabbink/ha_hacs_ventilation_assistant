@@ -32,6 +32,8 @@ from .calculations import (
     ventilation_advices,
 )
 from .const import (
+    CONF_COMFORT_CO2_MAX,
+    CONF_COMFORT_CO2_MIN,
     CONF_COMFORT_RH_MAX,
     CONF_COMFORT_RH_MIN,
     CONF_COMFORT_TEMP_MAX,
@@ -39,17 +41,22 @@ from .const import (
     CONF_DEVICE,
     CONF_DOOR_WINDOW_ENTITIES,
     CONF_GLOBAL,
+    CONF_INDOOR_CO2_ENTITIES,
     CONF_INDOOR_HUMIDITY_ENTITIES,
     CONF_INDOOR_TEMP_ENTITIES,
     CONF_KIND,
+    CONF_OUTDOOR_CO2_ENTITIES,
     CONF_OUTDOOR_HUMIDITY_ENTITIES,
     CONF_OUTDOOR_TEMP_ENTITIES,
     CONF_PRIORITY,
     DATA_GLOBAL_OPTIONS,
+    DEFAULT_COMFORT_CO2_MAX,
+    DEFAULT_COMFORT_CO2_MIN,
     DEFAULT_COMFORT_RH_MAX,
     DEFAULT_COMFORT_RH_MIN,
     DEFAULT_COMFORT_TEMP_MAX,
     DEFAULT_COMFORT_TEMP_MIN,
+    DEFAULT_OUTDOOR_CO2,
     DOMAIN,
     GLOBAL_OUTDOOR_DEVICE_ID,
     PLATFORMS,
@@ -90,9 +97,7 @@ async def async_migrate_entry(
     return True
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, entry: VentilationConfigEntry
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: VentilationConfigEntry) -> bool:
     """Set up Ventilation Assistant from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
@@ -204,9 +209,7 @@ def async_update_device_options(
     if entry.data[CONF_KIND] == CONF_GLOBAL:
         for subentry in entry.subentries.values():
             if subentry.subentry_id == coordinator.device_id:
-                hass.config_entries.async_update_subentry(
-                    entry, subentry, data=options
-                )
+                hass.config_entries.async_update_subentry(entry, subentry, data=options)
                 break
     else:
         hass.config_entries.async_update_entry(entry, options=options)
@@ -251,18 +254,22 @@ class VentilationSnapshot:
 
     indoor_temp: float | None
     indoor_rh: float | None
+    indoor_co2: int | None
     indoor_absolute_humidity: float | None
     indoor_projected_absolute_humidity: float | None
     indoor_projected_rh: float | None
     indoor_projected_rh_difference: float | None
     indoor_outdoor_temp_difference: float | None
+    projected_indoor_co2_difference: int | None
     outdoor_temp: float | None
     outdoor_rh: float | None
+    outdoor_co2: int | None
     outdoor_absolute_humidity: float | None
     any_open: bool | None
     open_percentage: float | None
     temperature_advice: str | None
     humidity_advice: str | None
+    carbon_dioxide_advice: str | None
     advice: str | None
 
 
@@ -354,6 +361,7 @@ class VentilationCoordinator:
             for key in (
                 CONF_INDOOR_TEMP_ENTITIES,
                 CONF_INDOOR_HUMIDITY_ENTITIES,
+                CONF_INDOOR_CO2_ENTITIES,
                 CONF_DOOR_WINDOW_ENTITIES,
             )
             for entity_id in _entity_ids(options.get(key))
@@ -364,10 +372,13 @@ class VentilationCoordinator:
 
         options = self.config.options
         outdoor_temp_entities = _entity_ids(options.get(CONF_OUTDOOR_TEMP_ENTITIES))
-        outdoor_rh_entities = _entity_ids(
-            options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
+        outdoor_rh_entities = _entity_ids(options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES))
+        outdoor_co2_entities = _entity_ids(options.get(CONF_OUTDOOR_CO2_ENTITIES))
+        return (
+            set(outdoor_temp_entities)
+            | set(outdoor_rh_entities)
+            | set(outdoor_co2_entities)
         )
-        return set(outdoor_temp_entities) | set(outdoor_rh_entities)
 
     @callback
     def async_add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
@@ -412,8 +423,10 @@ class VentilationCoordinator:
         indoor_rh = average(
             self._numeric_states(CONF_INDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
         )
+        indoor_co2 = _co2_average(self._numeric_states(CONF_INDOOR_CO2_ENTITIES, "ppm"))
         outdoor_temp = self._outdoor_temp()
         outdoor_rh = self._outdoor_rh()
+        outdoor_co2 = self._outdoor_co2()
 
         indoor_ah = absolute_humidity(indoor_temp, indoor_rh)
         outdoor_ah = self._outdoor_absolute_humidity(outdoor_temp, outdoor_rh)
@@ -431,18 +444,25 @@ class VentilationCoordinator:
             outdoor_temp=outdoor_temp,
             indoor_rh=indoor_rh,
             projected_rh=projected_rh,
+            indoor_co2=indoor_co2,
+            outdoor_co2=outdoor_co2,
         )
 
         return VentilationSnapshot(
             indoor_temp=indoor_temp,
             indoor_rh=indoor_rh,
+            indoor_co2=indoor_co2,
             indoor_absolute_humidity=indoor_ah,
             indoor_projected_absolute_humidity=projected_ah,
             indoor_projected_rh=projected_rh,
             indoor_projected_rh_difference=difference(projected_rh, indoor_rh),
             indoor_outdoor_temp_difference=difference(outdoor_temp, indoor_temp),
+            projected_indoor_co2_difference=_integer_difference(
+                outdoor_co2, indoor_co2
+            ),
             outdoor_temp=outdoor_temp,
             outdoor_rh=outdoor_rh,
+            outdoor_co2=outdoor_co2,
             outdoor_absolute_humidity=outdoor_ah,
             any_open=any_open,
             open_percentage=open_ratio(open_count, total_count),
@@ -451,6 +471,11 @@ class VentilationCoordinator:
             ),
             humidity_advice=(
                 advices.humidity.value if advices.humidity is not None else None
+            ),
+            carbon_dioxide_advice=(
+                advices.carbon_dioxide.value
+                if advices.carbon_dioxide is not None
+                else None
             ),
             advice=advices.overall.value if advices.overall is not None else None,
         )
@@ -490,6 +515,18 @@ class VentilationCoordinator:
                 options.get(
                     CONF_PRIORITY,
                     global_options.get(CONF_PRIORITY, Priority.TEMPERATURE),
+                )
+            ),
+            co2_min=float(
+                options.get(
+                    CONF_COMFORT_CO2_MIN,
+                    global_options.get(CONF_COMFORT_CO2_MIN, DEFAULT_COMFORT_CO2_MIN),
+                )
+            ),
+            co2_max=float(
+                options.get(
+                    CONF_COMFORT_CO2_MAX,
+                    global_options.get(CONF_COMFORT_CO2_MAX, DEFAULT_COMFORT_CO2_MAX),
                 )
             ),
         )
@@ -539,15 +576,18 @@ class VentilationCoordinator:
         global_snapshot = self._global_outdoor_snapshot()
         return global_snapshot.outdoor_rh if global_snapshot is not None else None
 
+    def _outdoor_co2(self) -> int | None:
+        if _entity_ids(self.config.options.get(CONF_OUTDOOR_CO2_ENTITIES)):
+            return _co2_average(self._numeric_states(CONF_OUTDOOR_CO2_ENTITIES, "ppm"))
+        global_snapshot = self._global_outdoor_snapshot()
+        return global_snapshot.outdoor_co2 if global_snapshot is not None else None
+
     def _outdoor_absolute_humidity(
         self, outdoor_temp: float | None, outdoor_rh: float | None
     ) -> float | None:
-        if (
-            not _entity_ids(self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES))
-            and not _entity_ids(
-                self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
-            )
-        ):
+        if not _entity_ids(
+            self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES)
+        ) and not _entity_ids(self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)):
             global_snapshot = self._global_outdoor_snapshot()
             return (
                 global_snapshot.outdoor_absolute_humidity
@@ -560,6 +600,7 @@ class VentilationCoordinator:
         return (
             not _entity_ids(self.config.options.get(CONF_OUTDOOR_TEMP_ENTITIES))
             or not _entity_ids(self.config.options.get(CONF_OUTDOOR_HUMIDITY_ENTITIES))
+            or not _entity_ids(self.config.options.get(CONF_OUTDOOR_CO2_ENTITIES))
         )
 
     def _global_outdoor_snapshot(self) -> VentilationSnapshot | None:
@@ -602,6 +643,11 @@ class VentilationCoordinator:
 class GlobalOutdoorCoordinator(VentilationCoordinator):
     """Coordinator for global outdoor weather sensors."""
 
+    def _uses_global_outdoor(self) -> bool:
+        """The global coordinator is the fallback source, never its own consumer."""
+
+        return False
+
     @property
     def input_entity_ids(self) -> set[str]:
         """Return configured global outdoor source entity ids."""
@@ -612,6 +658,7 @@ class GlobalOutdoorCoordinator(VentilationCoordinator):
             for key in (
                 CONF_OUTDOOR_TEMP_ENTITIES,
                 CONF_OUTDOOR_HUMIDITY_ENTITIES,
+                CONF_OUTDOOR_CO2_ENTITIES,
             )
             for entity_id in _entity_ids(options.get(key))
         }
@@ -625,22 +672,32 @@ class GlobalOutdoorCoordinator(VentilationCoordinator):
         outdoor_rh = average(
             self._numeric_states(CONF_OUTDOOR_HUMIDITY_ENTITIES, PERCENTAGE)
         )
+        configured_co2 = _entity_ids(self.config.options.get(CONF_OUTDOOR_CO2_ENTITIES))
+        outdoor_co2 = (
+            _co2_average(self._numeric_states(CONF_OUTDOOR_CO2_ENTITIES, "ppm"))
+            if configured_co2
+            else DEFAULT_OUTDOOR_CO2
+        )
 
         return VentilationSnapshot(
             indoor_temp=None,
             indoor_rh=None,
+            indoor_co2=None,
             indoor_absolute_humidity=None,
             indoor_projected_absolute_humidity=None,
             indoor_projected_rh=None,
             indoor_projected_rh_difference=None,
             indoor_outdoor_temp_difference=None,
+            projected_indoor_co2_difference=None,
             outdoor_temp=outdoor_temp,
             outdoor_rh=outdoor_rh,
+            outdoor_co2=outdoor_co2,
             outdoor_absolute_humidity=absolute_humidity(outdoor_temp, outdoor_rh),
             any_open=None,
             open_percentage=None,
             temperature_advice=None,
             humidity_advice=None,
+            carbon_dioxide_advice=None,
             advice=None,
         )
 
@@ -653,6 +710,19 @@ def _state_float(value: StateType) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _co2_average(values: list[float]) -> int | None:
+    """Return a whole-ppm arithmetic mean."""
+
+    result = average(values)
+    return round(result) if result is not None else None
+
+
+def _integer_difference(left: int | None, right: int | None) -> int | None:
+    """Return a whole-number difference, preserving unavailable inputs."""
+
+    return left - right if left is not None and right is not None else None
 
 
 def _temperature_to_celsius(value: float, unit: str | None) -> float:
@@ -677,10 +747,13 @@ def default_global_options() -> dict[str, Any]:
     return {
         CONF_OUTDOOR_TEMP_ENTITIES: [],
         CONF_OUTDOOR_HUMIDITY_ENTITIES: [],
+        CONF_OUTDOOR_CO2_ENTITIES: [],
         CONF_COMFORT_TEMP_MIN: DEFAULT_COMFORT_TEMP_MIN,
         CONF_COMFORT_TEMP_MAX: DEFAULT_COMFORT_TEMP_MAX,
         CONF_COMFORT_RH_MIN: DEFAULT_COMFORT_RH_MIN,
         CONF_COMFORT_RH_MAX: DEFAULT_COMFORT_RH_MAX,
+        CONF_COMFORT_CO2_MIN: DEFAULT_COMFORT_CO2_MIN,
+        CONF_COMFORT_CO2_MAX: DEFAULT_COMFORT_CO2_MAX,
         CONF_PRIORITY: Priority.TEMPERATURE.value,
     }
 

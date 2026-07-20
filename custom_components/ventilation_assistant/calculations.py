@@ -18,6 +18,8 @@ class ComfortSettings:
     rh_min: float
     rh_max: float
     priority: Priority
+    co2_min: float = 400.0
+    co2_max: float = 2000.0
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,7 @@ class VentilationAdvice:
 
     temperature: Advice | None
     humidity: Advice | None
+    carbon_dioxide: Advice | None
     overall: Advice | None
 
 
@@ -84,6 +87,8 @@ def ventilation_advice(
     outdoor_temp: float | None,
     indoor_rh: float | None,
     projected_rh: float | None,
+    indoor_co2: float | None = None,
+    outdoor_co2: float | None = None,
 ) -> Advice | None:
     """Return ventilation advice for the current measurements and contact state."""
 
@@ -94,6 +99,8 @@ def ventilation_advice(
         outdoor_temp=outdoor_temp,
         indoor_rh=indoor_rh,
         projected_rh=projected_rh,
+        indoor_co2=indoor_co2,
+        outdoor_co2=outdoor_co2,
     ).overall
 
 
@@ -105,8 +112,10 @@ def ventilation_advices(
     outdoor_temp: float | None,
     indoor_rh: float | None,
     projected_rh: float | None,
+    indoor_co2: float | None = None,
+    outdoor_co2: float | None = None,
 ) -> VentilationAdvice:
-    """Return temperature, humidity, and overall ventilation advice."""
+    """Return component and priority-resolved overall ventilation advice."""
 
     temperature_advice = _temperature_advice(
         settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
@@ -114,15 +123,23 @@ def ventilation_advices(
     humidity_advice = _humidity_advice(
         settings, indoor_temp, outdoor_temp, indoor_rh, projected_rh
     )
+    carbon_dioxide_advice = _carbon_dioxide_advice(settings, indoor_co2, outdoor_co2)
 
     if any_open is not None:
         temperature_advice = _apply_contact_state(temperature_advice, any_open)
         humidity_advice = _apply_contact_state(humidity_advice, any_open)
+        carbon_dioxide_advice = _apply_contact_state(carbon_dioxide_advice, any_open)
 
     return VentilationAdvice(
         temperature=temperature_advice,
         humidity=humidity_advice,
-        overall=_prioritized_advice(settings, temperature_advice, humidity_advice),
+        carbon_dioxide=carbon_dioxide_advice,
+        overall=_prioritized_advice(
+            settings,
+            temperature_advice,
+            humidity_advice,
+            carbon_dioxide_advice,
+        ),
     )
 
 
@@ -140,14 +157,26 @@ def _prioritized_advice(
     settings: ComfortSettings,
     temperature_advice: Advice | None,
     humidity_advice: Advice | None,
+    carbon_dioxide_advice: Advice | None,
 ) -> Advice | None:
-    primary, fallback = (
-        (temperature_advice, humidity_advice)
-        if settings.priority == Priority.TEMPERATURE
-        else (humidity_advice, temperature_advice)
-    )
-
-    return primary if primary is not None else fallback
+    ordered = {
+        Priority.TEMPERATURE: (
+            temperature_advice,
+            humidity_advice,
+            carbon_dioxide_advice,
+        ),
+        Priority.HUMIDITY: (
+            humidity_advice,
+            temperature_advice,
+            carbon_dioxide_advice,
+        ),
+        Priority.CO2: (
+            carbon_dioxide_advice,
+            temperature_advice,
+            humidity_advice,
+        ),
+    }[settings.priority]
+    return next((advice for advice in ordered if advice is not None), None)
 
 
 def _temperature_advice(
@@ -180,5 +209,19 @@ def _humidity_advice(
     if indoor_rh > settings.rh_max and projected_rh < indoor_rh:
         return Advice.OPEN
     if indoor_rh < settings.rh_min and projected_rh > indoor_rh:
+        return Advice.OPEN
+    return Advice.CLOSE
+
+
+def _carbon_dioxide_advice(
+    settings: ComfortSettings,
+    indoor_co2: float | None,
+    outdoor_co2: float | None,
+) -> Advice | None:
+    if indoor_co2 is None or outdoor_co2 is None:
+        return None
+    if indoor_co2 > settings.co2_max and outdoor_co2 < indoor_co2:
+        return Advice.OPEN
+    if indoor_co2 < settings.co2_min and outdoor_co2 > indoor_co2:
         return Advice.OPEN
     return Advice.CLOSE

@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 from .const import (
+    CONF_COMFORT_CO2_MAX,
+    CONF_COMFORT_CO2_MIN,
     CONF_COMFORT_RH_MAX,
     CONF_COMFORT_RH_MIN,
     CONF_COMFORT_TEMP_MAX,
@@ -21,12 +23,16 @@ from .const import (
     CONF_DEVICE,
     CONF_DOOR_WINDOW_ENTITIES,
     CONF_GLOBAL,
+    CONF_INDOOR_CO2_ENTITIES,
     CONF_INDOOR_HUMIDITY_ENTITIES,
     CONF_INDOOR_TEMP_ENTITIES,
     CONF_KIND,
+    CONF_OUTDOOR_CO2_ENTITIES,
     CONF_OUTDOOR_HUMIDITY_ENTITIES,
     CONF_OUTDOOR_TEMP_ENTITIES,
     CONF_PRIORITY,
+    DEFAULT_COMFORT_CO2_MAX,
+    DEFAULT_COMFORT_CO2_MIN,
     DEFAULT_COMFORT_RH_MAX,
     DEFAULT_COMFORT_RH_MIN,
     DEFAULT_COMFORT_TEMP_MAX,
@@ -61,6 +67,12 @@ class VentilationAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         if user_input is not None:
+            if not _co2_bounds_valid(user_input):
+                return self.async_show_form(
+                    step_id="global",
+                    data_schema=_global_schema(user_input),
+                    errors={"base": "invalid_co2_range"},
+                )
             return self.async_create_entry(
                 title="Ventilation Assistant",
                 data={CONF_KIND: CONF_GLOBAL},
@@ -107,6 +119,22 @@ class VentilationAssistantOptionsFlow(config_entries.OptionsFlow):
 
         kind = self._config_entry.data[CONF_KIND]
         if user_input is not None:
+            fallback = (
+                self._config_entry.options
+                if kind == CONF_GLOBAL
+                else _default_co2_bounds()
+            )
+            if not _co2_bounds_valid(user_input, fallback):
+                schema = (
+                    _global_schema(user_input)
+                    if kind == CONF_GLOBAL
+                    else _device_schema(user_input)
+                )
+                return self.async_show_form(
+                    step_id="init",
+                    data_schema=schema,
+                    errors={"base": "invalid_co2_range"},
+                )
             options = (
                 _global_options(user_input)
                 if kind == CONF_GLOBAL
@@ -144,6 +172,13 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
             if self._name_exists(name):
                 return self.async_abort(reason="already_configured")
 
+            if not _co2_bounds_valid(user_input, self._get_entry().options):
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=_device_schema(user_input),
+                    errors={"base": "invalid_co2_range"},
+                )
+
             return self.async_create_entry(
                 title=name,
                 data=_device_options(user_input),
@@ -161,6 +196,12 @@ class VentilationDeviceSubentryFlow(config_entries.ConfigSubentryFlow):
 
         subentry = self._get_reconfigure_subentry()
         if user_input is not None:
+            if not _co2_bounds_valid(user_input, self._get_entry().options):
+                return self.async_show_form(
+                    step_id="reconfigure",
+                    data_schema=_device_schema(user_input),
+                    errors={"base": "invalid_co2_range"},
+                )
             return self.async_update_and_abort(
                 self._get_entry(),
                 subentry,
@@ -199,6 +240,10 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 CONF_OUTDOOR_HUMIDITY_ENTITIES,
                 default=defaults.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []),
             ): _entity_selector("sensor", "humidity"),
+            vol.Optional(
+                CONF_OUTDOOR_CO2_ENTITIES,
+                default=defaults.get(CONF_OUTDOOR_CO2_ENTITIES, []),
+            ): _entity_selector("sensor", "carbon_dioxide"),
             vol.Required(
                 CONF_COMFORT_TEMP_MIN,
                 default=defaults.get(CONF_COMFORT_TEMP_MIN, DEFAULT_COMFORT_TEMP_MIN),
@@ -215,6 +260,14 @@ def _global_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 CONF_COMFORT_RH_MAX,
                 default=defaults.get(CONF_COMFORT_RH_MAX, DEFAULT_COMFORT_RH_MAX),
             ): _humidity_number_selector(),
+            vol.Required(
+                CONF_COMFORT_CO2_MIN,
+                default=defaults.get(CONF_COMFORT_CO2_MIN, DEFAULT_COMFORT_CO2_MIN),
+            ): _co2_number_selector(),
+            vol.Required(
+                CONF_COMFORT_CO2_MAX,
+                default=defaults.get(CONF_COMFORT_CO2_MAX, DEFAULT_COMFORT_CO2_MAX),
+            ): _co2_number_selector(),
             vol.Required(
                 CONF_PRIORITY,
                 default=defaults.get(CONF_PRIORITY, Priority.TEMPERATURE.value),
@@ -245,6 +298,10 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 default=defaults.get(CONF_INDOOR_HUMIDITY_ENTITIES, []),
             ): _entity_selector("sensor", "humidity"),
             vol.Optional(
+                CONF_INDOOR_CO2_ENTITIES,
+                default=defaults.get(CONF_INDOOR_CO2_ENTITIES, []),
+            ): _entity_selector("sensor", "carbon_dioxide"),
+            vol.Optional(
                 CONF_OUTDOOR_TEMP_ENTITIES,
                 default=defaults.get(CONF_OUTDOOR_TEMP_ENTITIES, []),
             ): _entity_selector("sensor", "temperature"),
@@ -252,6 +309,10 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
                 CONF_OUTDOOR_HUMIDITY_ENTITIES,
                 default=defaults.get(CONF_OUTDOOR_HUMIDITY_ENTITIES, []),
             ): _entity_selector("sensor", "humidity"),
+            vol.Optional(
+                CONF_OUTDOOR_CO2_ENTITIES,
+                default=defaults.get(CONF_OUTDOOR_CO2_ENTITIES, []),
+            ): _entity_selector("sensor", "carbon_dioxide"),
             vol.Optional(
                 CONF_DOOR_WINDOW_ENTITIES,
                 default=defaults.get(CONF_DOOR_WINDOW_ENTITIES, []),
@@ -268,6 +329,8 @@ def _device_schema(defaults: Mapping[str, Any] | None = None) -> vol.Schema:
             _optional_number(CONF_COMFORT_RH_MAX, defaults): (
                 _humidity_number_selector()
             ),
+            _optional_number(CONF_COMFORT_CO2_MIN, defaults): _co2_number_selector(),
+            _optional_number(CONF_COMFORT_CO2_MAX, defaults): _co2_number_selector(),
             vol.Optional(
                 CONF_PRIORITY, default=defaults.get(CONF_PRIORITY, "")
             ): selector.SelectSelector(
@@ -333,6 +396,18 @@ def _humidity_number_selector() -> selector.NumberSelector:
     )
 
 
+def _co2_number_selector() -> selector.NumberSelector:
+    return selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=1,
+            max=10000,
+            step=1,
+            mode=selector.NumberSelectorMode.BOX,
+            unit_of_measurement="ppm",
+        )
+    )
+
+
 def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
     return {
         CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
@@ -341,10 +416,15 @@ def _global_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
         CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
             user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
         ),
+        CONF_OUTDOOR_CO2_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_CO2_ENTITIES)
+        ),
         CONF_COMFORT_TEMP_MIN: user_input[CONF_COMFORT_TEMP_MIN],
         CONF_COMFORT_TEMP_MAX: user_input[CONF_COMFORT_TEMP_MAX],
         CONF_COMFORT_RH_MIN: user_input[CONF_COMFORT_RH_MIN],
         CONF_COMFORT_RH_MAX: user_input[CONF_COMFORT_RH_MAX],
+        CONF_COMFORT_CO2_MIN: user_input[CONF_COMFORT_CO2_MIN],
+        CONF_COMFORT_CO2_MAX: user_input[CONF_COMFORT_CO2_MAX],
         CONF_PRIORITY: user_input[CONF_PRIORITY],
     }
 
@@ -357,11 +437,15 @@ def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
         CONF_INDOOR_HUMIDITY_ENTITIES: _entity_ids(
             user_input.get(CONF_INDOOR_HUMIDITY_ENTITIES)
         ),
+        CONF_INDOOR_CO2_ENTITIES: _entity_ids(user_input.get(CONF_INDOOR_CO2_ENTITIES)),
         CONF_OUTDOOR_TEMP_ENTITIES: _entity_ids(
             user_input.get(CONF_OUTDOOR_TEMP_ENTITIES)
         ),
         CONF_OUTDOOR_HUMIDITY_ENTITIES: _entity_ids(
             user_input.get(CONF_OUTDOOR_HUMIDITY_ENTITIES)
+        ),
+        CONF_OUTDOOR_CO2_ENTITIES: _entity_ids(
+            user_input.get(CONF_OUTDOOR_CO2_ENTITIES)
         ),
         CONF_DOOR_WINDOW_ENTITIES: _entity_ids(
             user_input.get(CONF_DOOR_WINDOW_ENTITIES)
@@ -373,6 +457,8 @@ def _device_options(user_input: Mapping[str, Any]) -> dict[str, Any]:
         CONF_COMFORT_TEMP_MAX,
         CONF_COMFORT_RH_MIN,
         CONF_COMFORT_RH_MAX,
+        CONF_COMFORT_CO2_MIN,
+        CONF_COMFORT_CO2_MAX,
         CONF_PRIORITY,
     ):
         value = user_input.get(key)
@@ -390,3 +476,27 @@ def _entity_ids(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value] if value else []
     return list(value)
+
+
+def _default_co2_bounds() -> dict[str, float]:
+    return {
+        CONF_COMFORT_CO2_MIN: DEFAULT_COMFORT_CO2_MIN,
+        CONF_COMFORT_CO2_MAX: DEFAULT_COMFORT_CO2_MAX,
+    }
+
+
+def _co2_bounds_valid(
+    values: Mapping[str, Any], fallback: Mapping[str, Any] | None = None
+) -> bool:
+    """Return whether the effective CO2 comfort minimum is below the maximum."""
+
+    fallback = fallback or _default_co2_bounds()
+    minimum = values.get(
+        CONF_COMFORT_CO2_MIN,
+        fallback.get(CONF_COMFORT_CO2_MIN, DEFAULT_COMFORT_CO2_MIN),
+    )
+    maximum = values.get(
+        CONF_COMFORT_CO2_MAX,
+        fallback.get(CONF_COMFORT_CO2_MAX, DEFAULT_COMFORT_CO2_MAX),
+    )
+    return float(minimum) < float(maximum)
