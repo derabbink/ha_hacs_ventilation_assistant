@@ -1,0 +1,267 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Configurer les valeurs globales par défaut ou créer une zone de ventilation.",
+        "data": {
+          "kind": "Action"
+        }
+      },
+      "global": {
+        "title": "Valeurs globales par défaut",
+        "data": {
+          "outdoor_temp_entities": "Capteurs de température extérieure",
+          "outdoor_humidity_entities": "Capteurs d'humidité extérieure",
+          "outdoor_co2_entities": "Capteurs de dioxyde de carbone extérieur",
+          "comfort_temp_min": "Température de confort intérieure minimale",
+          "comfort_temp_max": "Température de confort intérieure maximale",
+          "comfort_rh_min": "Humidité de confort intérieure minimale",
+          "comfort_rh_max": "Humidité de confort intérieure maximale",
+          "comfort_co2_min": "Dioxyde de carbone de confort intérieur minimal",
+          "comfort_co2_max": "Dioxyde de carbone de confort intérieur maximal",
+          "priority": "Priorité"
+        }
+      },
+      "device": {
+        "title": "Zone de ventilation",
+        "data": {
+          "name": "Nom",
+          "indoor_temp_entities": "Capteurs de température intérieure",
+          "indoor_humidity_entities": "Capteurs d'humidité intérieure",
+          "indoor_co2_entities": "Capteurs de dioxyde de carbone intérieur",
+          "outdoor_temp_entities": "Capteurs de température extérieure",
+          "outdoor_humidity_entities": "Capteurs d'humidité extérieure",
+          "outdoor_co2_entities": "Capteurs de dioxyde de carbone extérieur",
+          "door_window_entities": "Capteurs de porte/fenêtre",
+          "comfort_temp_min": "Remplacement température de confort intérieure minimale",
+          "comfort_temp_max": "Remplacement température de confort intérieure maximale",
+          "comfort_rh_min": "Remplacement humidité de confort intérieure minimale",
+          "comfort_rh_max": "Remplacement humidité de confort intérieure maximale",
+          "comfort_co2_min": "Remplacement dioxyde de carbone de confort intérieur minimal",
+          "comfort_co2_max": "Remplacement dioxyde de carbone de confort intérieur maximal",
+          "priority": "Remplacement priorité"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Cette entrée existe déjà."
+    },
+    "error": {
+      "invalid_co2_range": "Le minimum de confort pour le dioxyde de carbone doit être inférieur au maximum."
+    }
+  },
+  "config_subentries": {
+    "device": {
+      "entry_type": "Zone de ventilation",
+      "initiate_flow": {
+        "user": "Ajouter une zone de ventilation"
+      },
+      "step": {
+        "user": {
+          "title": "Zone de ventilation",
+          "data": {
+            "name": "Nom",
+            "indoor_temp_entities": "Capteurs de température intérieure",
+            "indoor_humidity_entities": "Capteurs d'humidité intérieure",
+            "indoor_co2_entities": "Capteurs de dioxyde de carbone intérieur",
+            "outdoor_temp_entities": "Capteurs de température extérieure",
+            "outdoor_humidity_entities": "Capteurs d'humidité extérieure",
+            "outdoor_co2_entities": "Capteurs de dioxyde de carbone extérieur",
+            "door_window_entities": "Capteurs de porte/fenêtre",
+            "comfort_temp_min": "Remplacement température de confort intérieure minimale",
+            "comfort_temp_max": "Remplacement température de confort intérieure maximale",
+            "comfort_rh_min": "Remplacement humidité de confort intérieure minimale",
+            "comfort_rh_max": "Remplacement humidité de confort intérieure maximale",
+            "comfort_co2_min": "Remplacement dioxyde de carbone de confort intérieur minimal",
+            "comfort_co2_max": "Remplacement dioxyde de carbone de confort intérieur maximal",
+            "priority": "Remplacement priorité"
+          }
+        },
+        "reconfigure": {
+          "title": "Configurer la zone de ventilation",
+          "data": {
+            "indoor_temp_entities": "Capteurs de température intérieure",
+            "indoor_humidity_entities": "Capteurs d'humidité intérieure",
+            "indoor_co2_entities": "Capteurs de dioxyde de carbone intérieur",
+            "outdoor_temp_entities": "Capteurs de température extérieure",
+            "outdoor_humidity_entities": "Capteurs d'humidité extérieure",
+            "outdoor_co2_entities": "Capteurs de dioxyde de carbone extérieur",
+            "door_window_entities": "Capteurs de porte/fenêtre",
+            "comfort_temp_min": "Remplacement température de confort intérieure minimale",
+            "comfort_temp_max": "Remplacement température de confort intérieure maximale",
+            "comfort_rh_min": "Remplacement humidité de confort intérieure minimale",
+            "comfort_rh_max": "Remplacement humidité de confort intérieure maximale",
+            "comfort_co2_min": "Remplacement dioxyde de carbone de confort intérieur minimal",
+            "comfort_co2_max": "Remplacement dioxyde de carbone de confort intérieur maximal",
+            "priority": "Remplacement priorité"
+          }
+        }
+      },
+      "abort": {
+        "already_configured": "Ce dispositif de ventilation existe déjà."
+      },
+      "error": {
+        "invalid_co2_range": "Le minimum de confort pour le dioxyde de carbone doit être inférieur au maximum."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "indoor_temp_entities": "Capteurs de température intérieure",
+          "indoor_humidity_entities": "Capteurs d'humidité intérieure",
+          "indoor_co2_entities": "Capteurs de dioxyde de carbone intérieur",
+          "outdoor_temp_entities": "Capteurs de température extérieure",
+          "outdoor_humidity_entities": "Capteurs d'humidité extérieure",
+          "outdoor_co2_entities": "Capteurs de dioxyde de carbone extérieur",
+          "door_window_entities": "Capteurs de porte/fenêtre",
+          "comfort_temp_min": "Température de confort intérieure minimale",
+          "comfort_temp_max": "Température de confort intérieure maximale",
+          "comfort_rh_min": "Humidité de confort intérieure minimale",
+          "comfort_rh_max": "Humidité de confort intérieure maximale",
+          "comfort_co2_min": "Dioxyde de carbone de confort intérieur minimal",
+          "comfort_co2_max": "Dioxyde de carbone de confort intérieur maximal",
+          "priority": "Priorité"
+        }
+      }
+    },
+    "error": {
+      "invalid_co2_range": "Le minimum de confort pour le dioxyde de carbone doit être inférieur au maximum."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Température intérieure"
+      },
+      "indoor_humidity": {
+        "name": "Humidité intérieure"
+      },
+      "indoor_carbon_dioxide": {
+        "name": "Dioxyde de carbone intérieur"
+      },
+      "indoor_absolute_humidity": {
+        "name": "Humidité absolue intérieure"
+      },
+      "indoor_projected_absolute_humidity": {
+        "name": "Humidité absolue intérieure projetée"
+      },
+      "indoor_projected_humidity": {
+        "name": "Humidité intérieure projetée"
+      },
+      "indoor_projected_humidity_difference": {
+        "name": "Différence d'humidité intérieure projetée"
+      },
+      "indoor_outdoor_temperature_difference": {
+        "name": "Différence de température intérieure projetée"
+      },
+      "projected_indoor_carbon_dioxide_difference": {
+        "name": "Différence de dioxyde de carbone intérieur projetée"
+      },
+      "outdoor_temperature": {
+        "name": "Température extérieure"
+      },
+      "outdoor_humidity": {
+        "name": "Humidité extérieure"
+      },
+      "outdoor_carbon_dioxide": {
+        "name": "Dioxyde de carbone extérieur"
+      },
+      "outdoor_absolute_humidity": {
+        "name": "Humidité absolue extérieure"
+      },
+      "global_outdoor_temperature": {
+        "name": "Température"
+      },
+      "global_outdoor_humidity": {
+        "name": "Humidité"
+      },
+      "global_outdoor_carbon_dioxide": {
+        "name": "Dioxyde de carbone"
+      },
+      "global_absolute_outdoor_humidity": {
+        "name": "Humidité absolue"
+      },
+      "doors_windows_open_percentage": {
+        "name": "Portes/fenêtres ouvertes"
+      },
+      "temperature_advice": {
+        "name": "Conseil de température",
+        "state": {
+          "keep_closed": "Maintenir fermé",
+          "open": "Ouvrir",
+          "keep_open": "Maintenir ouvert",
+          "close": "Fermer"
+        }
+      },
+      "humidity_advice": {
+        "name": "Conseil d'humidité",
+        "state": {
+          "keep_closed": "Maintenir fermé",
+          "open": "Ouvrir",
+          "keep_open": "Maintenir ouvert",
+          "close": "Fermer"
+        }
+      },
+      "carbon_dioxide_advice": {
+        "name": "Conseil dioxyde de carbone",
+        "state": {
+          "keep_closed": "Maintenir fermé",
+          "open": "Ouvrir",
+          "keep_open": "Maintenir ouvert",
+          "close": "Fermer"
+        }
+      },
+      "advice": {
+        "name": "Conseil",
+        "state": {
+          "keep_closed": "Maintenir fermé",
+          "open": "Ouvrir",
+          "keep_open": "Maintenir ouvert",
+          "close": "Fermer"
+        }
+      }
+    },
+    "binary_sensor": {
+      "any_door_window_open": {
+        "name": "Portes/fenêtres ouvertes"
+      }
+    },
+    "number": {
+      "comfort_temp_min": {
+        "name": "Température de confort intérieure minimale"
+      },
+      "comfort_temp_max": {
+        "name": "Température de confort intérieure maximale"
+      },
+      "comfort_rh_min": {
+        "name": "Humidité de confort intérieure minimale"
+      },
+      "comfort_rh_max": {
+        "name": "Humidité de confort intérieure maximale"
+      },
+      "comfort_co2_min": {
+        "name": "Dioxyde de carbone de confort intérieur minimal"
+      },
+      "comfort_co2_max": {
+        "name": "Dioxyde de carbone de confort intérieur maximal"
+      }
+    },
+    "select": {
+      "priority": {
+        "name": "Priorité",
+        "state": {
+          "temperature": "Température",
+          "humidity": "Humidité",
+          "carbon_dioxide": "Dioxyde de carbone"
+        }
+      }
+    }
+  },
+  "device": {
+    "outdoor": {
+      "name": "Extérieur"
+    }
+  }
+}
